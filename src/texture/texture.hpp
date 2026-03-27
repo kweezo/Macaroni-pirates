@@ -1,13 +1,15 @@
 #pragma once
 
 #include <cstdint>
+#include <cmath>
 
 #include <SDL3/SDL.h>
 
 class Texture {
     public:
         struct Transform {
-            uint16_t x, y, w, h;
+            int x, y;
+            uint16_t w, h;
         };
 
         struct Color {
@@ -17,7 +19,7 @@ class Texture {
         Texture();
         Texture(const uint8_t* data, uint8_t w, uint8_t h);
 
-        void draw(SDL_Renderer* renderer, Transform transform, Color color);
+        void draw(SDL_Surface* surface, Transform transform, Color color);
 
     private:
         uint8_t const* data;

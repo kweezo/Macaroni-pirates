@@ -2,13 +2,13 @@
 
 #include "manager/game_state.hpp"
 
-Player::Player(): tex(), drawIndex(), x(), y() {
+#include "player_tex"
 
+Player::Player(): tex(), drawIndex(), x(), y(), Process(1000) {
 }
 
 void Player::init() {
-    static uint8_t color[]  = {127, 127, 127};
-    tex = Texture(color, 1, 1);
+    tex = Texture(texDat, texWidth, texHeight);
     drawIndex = gameState.renderer.getNextFreeDrawIndex(std::bind(&Player::render, this, std::placeholders::_1));
 }
 
@@ -43,7 +43,6 @@ void Player::movement() {
 
     dx *= speed / scalar;
     dy *= speed / scalar;
-    std::cerr << dt << "\n";
 
     x += dx * dt;
     y += dy * dt;
@@ -53,8 +52,8 @@ void Player::destruct() {
     gameState.renderer.removeDrawIndex(drawIndex);
 }
 
-void Player::render(SDL_Renderer* renderer) {
-    tex.draw(renderer,
-    {(uint16_t)floor(x), (uint16_t)floor(y), 100, 100},
+void Player::render(SDL_Surface* surface) {
+    tex.draw(surface,
+    {(int)floor(x), (int)floor(y), 150, 100},
     {255, 255, 255, 255});
 }

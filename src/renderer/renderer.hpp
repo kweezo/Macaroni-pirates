@@ -18,9 +18,10 @@ class Renderer : public Process {
     public:
         Renderer();
 
-        size_t getNextFreeDrawIndex(std::function<void(SDL_Renderer*)> fun);
+        size_t getNextFreeDrawIndex(std::function<void(SDL_Surface*)> fun);
         void removeDrawIndex(size_t i);
 
+        SDL_Surface* getWindowSurface();
     private:
         void createWindow();
         void createRenderer();
@@ -30,6 +31,6 @@ class Renderer : public Process {
         SDL_Window* window;
         SDL_Renderer* renderer;
 
-        std::array<std::function<void(SDL_Renderer*)>, DRAW_STACK_SIZE> drawStack;
+        std::array<std::function<void(SDL_Surface*)>, DRAW_STACK_SIZE> drawStack;
         std::mutex drawStackMutex;
 };

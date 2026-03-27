@@ -1,31 +1,23 @@
 #pragma once
-
 #include <SDL3/SDL.h>
-
-#include <cmath>
 
 #include "manager/process/process.hpp"
 #include "texture/texture.hpp"
 
-class Player : public Process {
+class Map : public Process {
     public:
-        Player();
+        Map();
+        Map(float beachRatio);
+
     private:
         void init() override;
         void run() override;
         void destruct() override;
 
         void render(SDL_Surface* surface);
-
-        void movement();
-
-        Texture tex;
+        
+        Texture sandTex;
         size_t drawIndex;
 
-        float x, y;
-
-        const float speed = 0.4;
-
-        float dt;
-        size_t lastTime;
+        float beachRatio;
 };

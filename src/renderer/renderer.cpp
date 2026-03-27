@@ -20,12 +20,11 @@ void Renderer::run() {
             gameState.processManager.stop();
     }
 
-    SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
-    SDL_RenderClear(renderer);
+    memset(getWindowSurface()->pixels, 0, getWindowSurface()->pitch * getWindowSurface()->h);
 
     render();
 
-    SDL_RenderPresent(renderer);
+    SDL_UpdateWindowSurface(window);
 }
 
 void Renderer::destruct() {
@@ -38,20 +37,20 @@ void Renderer::destruct() {
 }
 
 void Renderer::createWindow() {
-    window = SDL_CreateWindow("DOWN WITH THE MAC REGIME", 1280, 720, 0);
+    window = SDL_CreateWindow("DOWN WITH THE MAC REGIME", WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 
 
     if(!window) throw new std::runtime_error("Failed to create window");
 }
 
 void Renderer::createRenderer() {
-    renderer = SDL_CreateRenderer(window, nullptr);
-    
+
+    renderer = SDL_CreateSoftwareRenderer(getWindowSurface());
     if(!renderer) throw new std::runtime_error("Failed to create renderer");
 }
 
 void Renderer::render() {
-    std::array<std::function<void(SDL_Renderer*)>, DRAW_STACK_SIZE> drawStackCopy;
+    std::array<std::function<void(SDL_Surface*)>, DRAW_STACK_SIZE> drawStackCopy;
 
     drawStackMutex.lock();
     std::copy(drawStack.begin(), drawStack.end(), drawStackCopy.begin()); 
@@ -59,11 +58,12 @@ void Renderer::render() {
 
     for(auto drawFunc : drawStackCopy) {
         if(drawFunc)
-            drawFunc(renderer);
+            drawFunc(getWindowSurface());
     }
+  
 }
 
-size_t Renderer::getNextFreeDrawIndex(std::function<void(SDL_Renderer*)> fun) {
+size_t Renderer::getNextFreeDrawIndex(std::function<void(SDL_Surface*)> fun) {
     std::lock_guard lock(drawStackMutex);
     for(int i = 0; i < DRAW_STACK_SIZE; i++) {
         if(drawStack[i]) continue;
@@ -78,4 +78,8 @@ size_t Renderer::getNextFreeDrawIndex(std::function<void(SDL_Renderer*)> fun) {
 void Renderer::removeDrawIndex(size_t i) {
     std::lock_guard lock(drawStackMutex);
     drawStack[i] = {};
+}
+
+SDL_Surface* Renderer::getWindowSurface() {
+    return SDL_GetWindowSurface(window);
 }

@@ -7,6 +7,7 @@
 class Process {
     friend class ProcessManager;
     protected:
+
         virtual void init() {};
         virtual void run() {};
         virtual void destruct() {};
@@ -16,6 +17,10 @@ class Process {
         std::string getName();
 
         Process();
+        Process(uint32_t minSleepNS);
         Process(Process&) = delete;
         Process(Process&&) = delete;
+        
+        uint32_t minSleepNS;
+        uint32_t lastRun;
 };
