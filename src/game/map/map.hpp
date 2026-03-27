@@ -15,6 +15,7 @@ class Map : public Process {
         void destruct() override;
 
         void render(SDL_Surface* surface);
+        void render_row(SDL_Surface* surface, uint16_t y);
         
         Texture sandTex;
         size_t drawIndex;

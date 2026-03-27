@@ -37,7 +37,7 @@ void Renderer::destruct() {
 }
 
 void Renderer::createWindow() {
-    window = SDL_CreateWindow("DOWN WITH THE MAC REGIME", WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+    window = SDL_CreateWindow("this shit is so async", WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 
 
     if(!window) throw new std::runtime_error("Failed to create window");
@@ -56,9 +56,14 @@ void Renderer::render() {
     std::copy(drawStack.begin(), drawStack.end(), drawStackCopy.begin()); 
     drawStackMutex.unlock();
 
-    for(auto drawFunc : drawStackCopy) {
-        if(drawFunc)
-            drawFunc(getWindowSurface());
+    for(int i = 0; i < DRAW_STACK_SIZE; i++) {
+        if(drawStack[i])
+            drawFutures[i] = std::async(drawStack[i], getWindowSurface());
+    }
+
+    for(int i = 0; i < DRAW_STACK_SIZE; i++) {
+        if(drawFutures[i].valid())
+            drawFutures[i].get();
     }
   
 }

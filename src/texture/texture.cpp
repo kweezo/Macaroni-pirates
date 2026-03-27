@@ -1,5 +1,7 @@
 #include "texture.hpp"
 
+std::array<std::mutex, RENDER_CHUNK_COUNT_X * RENDER_CHUNK_COUNT_Y> Texture::mutexes = {};
+
 Texture::Texture(): data(nullptr), w(), h() {
 
 }
@@ -8,11 +10,11 @@ Texture::Texture(const uint8_t* data, uint8_t w, uint8_t h): data(data), w(w), h
 
 }
 
-#include <iostream>
-
 void Texture::draw(SDL_Surface* surface, Transform transform, Color color) {
     float pWidth = ceil((float)transform.w / w);
     float pHeight = ceil((float)transform.h / h);
+
+    toggleMutexArray(transform, true);
 
     for(uint8_t x = 0; x < w; x++) {
         for(uint8_t y = 0; y < h; y++) {
@@ -34,4 +36,20 @@ void Texture::draw(SDL_Surface* surface, Transform transform, Color color) {
         }
     }
 
+    toggleMutexArray(transform, false);
+}
+
+void Texture::toggleMutexArray(Transform transform, bool lock) {
+    size_t mutexLockCountX = ceil((float)transform.w / RENDER_CHUNK_SIZE);
+    size_t mutexLockCountY = ceil((float)transform.h / RENDER_CHUNK_SIZE);
+    int startX = floor(transform.x / RENDER_CHUNK_SIZE);
+    int startY = floor(transform.y / RENDER_CHUNK_SIZE);
+
+    for(int x = startX; x < startX + mutexLockCountX; x++) {
+        for(int y = startY; y < startY + mutexLockCountY; y++) {
+            lock ?
+            mutexes[y * RENDER_CHUNK_COUNT_X + x].lock() :
+            mutexes[y * RENDER_CHUNK_COUNT_X + x].unlock();
+        }
+    }
 }

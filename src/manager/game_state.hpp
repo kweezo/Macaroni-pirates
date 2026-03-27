@@ -8,12 +8,7 @@
 #include "game/player/player.hpp"
 #include "game/map/map.hpp"
 
-//todo move into separate header
-#define MILLIS std::chrono::system_clock::now().time_since_epoch().count() 
-#define NS 1000000
-
-#define WINDOW_WIDTH 1600
-#define WINDOW_HEIGHT 900
+#include "macros.hpp"
 
 struct GameState {
     GameState();

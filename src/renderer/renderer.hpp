@@ -4,6 +4,7 @@
 
 #include <array>
 #include <functional>
+#include <future>
 #include <mutex>
 
 #include "manager/process/process.hpp"
@@ -32,5 +33,6 @@ class Renderer : public Process {
         SDL_Renderer* renderer;
 
         std::array<std::function<void(SDL_Surface*)>, DRAW_STACK_SIZE> drawStack;
+        std::array<std::future<void>, DRAW_STACK_SIZE> drawFutures;
         std::mutex drawStackMutex;
 };
