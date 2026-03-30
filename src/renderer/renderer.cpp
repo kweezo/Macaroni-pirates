@@ -20,7 +20,7 @@ void Renderer::run() {
             gameState.processManager.stop();
     }
 
-    memset(getWindowSurface()->pixels, 0, getWindowSurface()->pitch * getWindowSurface()->h);
+    memset(getWindowSurface()->pixels, 127, getWindowSurface()->pitch * getWindowSurface()->h);
 
     render();
 
@@ -50,7 +50,7 @@ void Renderer::createRenderer() {
 }
 
 void Renderer::render() {
-    std::array<std::function<void(SDL_Surface*)>, DRAW_STACK_SIZE> drawStackCopy;
+    std::array<Drawable*, DRAW_STACK_SIZE> drawStackCopy;
 
     drawStackMutex.lock();
     std::copy(drawStack.begin(), drawStack.end(), drawStackCopy.begin()); 
@@ -58,22 +58,27 @@ void Renderer::render() {
 
     for(int i = 0; i < DRAW_STACK_SIZE; i++) {
         if(drawStack[i])
-            drawFutures[i] = std::async(drawStack[i], getWindowSurface());
+            drawFutures[i] = std::async(
+                std::bind(&Drawable::renderWrapper, drawStackCopy[i], getWindowSurface()));
     }
 
     for(int i = 0; i < DRAW_STACK_SIZE; i++) {
         if(drawFutures[i].valid())
             drawFutures[i].get();
     }
+    for(int i = 0; i < DRAW_STACK_SIZE; i++) {
+        if(drawStack[i])
+            drawStack[i]->resetMutex();
+    }
   
 }
 
-size_t Renderer::getNextFreeDrawIndex(std::function<void(SDL_Surface*)> fun) {
+size_t Renderer::getNextFreeDrawIndex(Drawable* drawable) {
     std::lock_guard lock(drawStackMutex);
     for(int i = 0; i < DRAW_STACK_SIZE; i++) {
         if(drawStack[i]) continue;
         
-        drawStack[i] = fun;
+        drawStack[i] = drawable;
         return i;
     }
 

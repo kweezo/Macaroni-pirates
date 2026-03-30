@@ -21,6 +21,7 @@ void Process::asyncTask(const std::atomic_bool& shouldRun) {
         } 
         destruct();
     } catch (std::exception e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << e.what() << "\n";
+        exit(EXIT_FAILURE);
     }
 }

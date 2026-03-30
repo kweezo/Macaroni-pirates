@@ -5,16 +5,15 @@
 
 #define SAND_TILE_SIZE 32
 
-Map::Map(): beachRatio(), drawIndex() {
+Map::Map(): beachRatio() {
 
 }
 
-Map::Map(float beachRatio): beachRatio(beachRatio), drawIndex() {
+Map::Map(float beachRatio): beachRatio(beachRatio) {
 
 }
 
 void Map::init() {
-    drawIndex = gameState.renderer.getNextFreeDrawIndex(std::bind(&Map::render, this, std::placeholders::_1));
     sandTex = Texture(sandTexDat, sandTexWidth, sandTexHeight);
 }
 
@@ -23,7 +22,6 @@ void Map::run() {
 }
 
 void Map::destruct() {
-    gameState.renderer.removeDrawIndex(drawIndex);
 }
 
 void Map::render(SDL_Surface* surface) {

@@ -3,8 +3,9 @@
 
 #include "manager/process/process.hpp"
 #include "texture/texture.hpp"
+#include "renderer/drawable/drawable.hpp"
 
-class Map : public Process {
+class Map : public Process, Drawable {
     public:
         Map();
         Map(float beachRatio);
@@ -14,11 +15,10 @@ class Map : public Process {
         void run() override;
         void destruct() override;
 
-        void render(SDL_Surface* surface);
+        void render(SDL_Surface* surface) override;
         void render_row(SDL_Surface* surface, uint16_t y);
         
         Texture sandTex;
-        size_t drawIndex;
 
         float beachRatio;
 };

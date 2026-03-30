@@ -3,11 +3,19 @@
 #include <SDL3/SDL.h>
 
 #include <cmath>
+#include <array>
 
 #include "manager/process/process.hpp"
 #include "texture/texture.hpp"
+#include "renderer/drawable/drawable.hpp"
+#include "cannonball/cannonball.hpp"
 
-class Player : public Process {
+#define MAX_CANNONBALL_COUNT 12
+#define CANNONBALL_OFFSET_X 100
+#define CANNONBALL_OFFSET_Y 70
+#define BASE_CANNONBALL_SPEED 1
+
+class Player : public Process, Drawable {
     public:
         Player();
     private:
@@ -15,17 +23,21 @@ class Player : public Process {
         void run() override;
         void destruct() override;
 
-        void render(SDL_Surface* surface);
+        void render(SDL_Surface* surface) override;
 
         void movement();
+        void shooting();
 
         Texture tex;
-        size_t drawIndex;
 
         float x, y;
 
         const float speed = 0.4;
 
+        bool lastShotPress;
+
         float dt;
         size_t lastTime;
+
+        std::array<Cannonball, MAX_CANNONBALL_COUNT> cannonballs;
 };
