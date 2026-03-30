@@ -59,7 +59,7 @@ void Renderer::render() {
     for(int i = 0; i < DRAW_STACK_SIZE; i++) {
         if(drawStack[i])
             drawFutures[i] = std::async(
-                std::bind(&Drawable::renderWrapper, drawStackCopy[i], getWindowSurface()));
+                &Drawable::renderWrapper, drawStackCopy[i], getWindowSurface());
     }
 
     for(int i = 0; i < DRAW_STACK_SIZE; i++) {
