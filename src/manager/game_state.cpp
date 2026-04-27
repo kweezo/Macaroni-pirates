@@ -10,5 +10,6 @@ void GameState::start() {
     processManager.start();
     processManager.addProcess(*(Process*)&renderer);
     processManager.addProcess(*(Process*)&player);
+    processManager.addProcess(*(Process*)&enemyManager);
     processManager.addProcess(*(Process*)&map);
 }

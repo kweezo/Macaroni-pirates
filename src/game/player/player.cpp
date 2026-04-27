@@ -24,8 +24,8 @@ void Player::run() {
         i++;
     }
 
-    dt = (MILLIS - lastTime) / (float)NS;
-    lastTime = MILLIS;
+    dt = (NANOS - lastTime) / (float)NS;
+    lastTime = NANOS;
 }
 
 

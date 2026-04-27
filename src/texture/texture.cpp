@@ -10,11 +10,11 @@ Texture::Texture(const uint8_t* data, uint8_t w, uint8_t h): data(data), w(w), h
 
 }
 
-void Texture::draw(SDL_Surface* surface, Transform transform, Color color) {
+void Texture::draw(SDL_Surface* surface, Transform transform, Color color/*TODO*/) {
     float pWidth = ceil((float)transform.w / w);
     float pHeight = ceil((float)transform.h / h);
 
-    toggleMutexArray(transform, true);
+    setMutexArray(transform, true);
 
     for(uint8_t x = 0; x < w; x++) {
         for(uint8_t y = 0; y < h; y++) {
@@ -36,10 +36,10 @@ void Texture::draw(SDL_Surface* surface, Transform transform, Color color) {
         }
     }
 
-    toggleMutexArray(transform, false);
+    setMutexArray(transform, false);
 }
 
-void Texture::toggleMutexArray(Transform transform, bool lock) {
+void Texture::setMutexArray(Transform transform, bool lock) {
     size_t mutexLockCountX = ceil((float)transform.w / RENDER_CHUNK_SIZE);
     size_t mutexLockCountY = ceil((float)transform.h / RENDER_CHUNK_SIZE);
     int startX = floor(transform.x / RENDER_CHUNK_SIZE);

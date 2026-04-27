@@ -5,15 +5,15 @@
 #include <cmath>
 #include <array>
 
-#include "manager/process/process.hpp"
 #include "texture/texture.hpp"
+#include "manager/process/process.hpp"
 #include "renderer/drawable/drawable.hpp"
 #include "cannonball/cannonball.hpp"
 
 #define MAX_CANNONBALL_COUNT 12
 #define CANNONBALL_OFFSET_X 100
 #define CANNONBALL_OFFSET_Y 70
-#define BASE_CANNONBALL_SPEED 1
+#define BASE_CANNONBALL_SPEED 1000
 
 class Player : public Process, Drawable {
     public:
@@ -32,7 +32,7 @@ class Player : public Process, Drawable {
 
         float x, y;
 
-        const float speed = 0.4;
+        const float speed = 400;
 
         bool lastShotPress;
 

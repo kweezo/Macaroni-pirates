@@ -44,3 +44,7 @@ void Map::render_row(SDL_Surface* surface, uint16_t y) {
     }
 
 }
+
+bool Map::onBeach(float x, float y) {
+    return y > (1 - beachRatio) * WINDOW_HEIGHT;
+}

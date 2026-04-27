@@ -10,6 +10,8 @@ class Map : public Process, Drawable {
         Map();
         Map(float beachRatio);
 
+        bool onBeach(float x, float y);
+
     private:
         void init() override;
         void run() override;
