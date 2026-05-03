@@ -24,6 +24,7 @@ public:
 private:
   void sortEntries();
   void saveToFile();
+  void seedAchievableDummyLocked();
 
   std::array<Entry, SCORE_STORE_MAX_SCORES> entries{};
   size_t entryCount = 0;

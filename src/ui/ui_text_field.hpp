@@ -25,6 +25,9 @@ public:
   void setFocused(bool on);
   bool focused() const { return isFocused; }
 
+  void setText(const char *utf8);
+  void setPlaceholder(const char *utf8);
+
   const char *text() const { return textChars; }
 
 private:
@@ -34,5 +37,6 @@ private:
   float h = 0;
   SDL_Window *sdlWindow = nullptr;
   char textChars[MaxChars + 1]{};
+  char placeholderChars[MaxChars + 1]{};
   bool isFocused = false;
 };

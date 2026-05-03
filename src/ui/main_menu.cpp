@@ -3,10 +3,9 @@
 #include "macros.hpp"
 #include "manager/game_state.hpp"
 #include "renderer/font/font_renderer.hpp"
+#include "ui/leaderboard_view.hpp"
 
 #include <SDL3/SDL.h>
-
-#include <cstring>
 
 MainMenu::~MainMenu() {
   if (window)
@@ -28,12 +27,16 @@ MainMenuResult MainMenu::run(GameState &gs) {
   }
 
   nameField.setWindow(window);
-  nameField.setRect(48.0f, 200.0f, 360.0f, 44.0f);
+  nameField.setRect(48.0f, 218.0f, 420.0f, 48.0f);
+  nameField.setPlaceholder("Your name");
+  nameField.setText(gs.playerProfile.nameUtf8());
 
-  const float btnW = 220.0f;
+  gs.reloadScoresFromDisk();
+
+  const float btnW = 240.0f;
   const float btnH = 48.0f;
   const float leftX = 48.0f;
-  const float playY = 280.0f;
+  const float playY = 300.0f;
   playButton = UIButton(leftX, playY, btnW, btnH);
   replayButton = UIButton(leftX, playY + btnH + 12.0f, btnW, btnH);
   quitButton = UIButton(leftX, playY + 2.0f * btnH + 28.0f, btnW, btnH);
@@ -78,16 +81,21 @@ MainMenuResult MainMenu::run(GameState &gs) {
   return outcome;
 }
 
+void MainMenu::applyOptionalName(GameState &gs) {
+  const char *nm = nameField.text();
+  if (nm[0])
+    gs.playerProfile.setFromUtf8(nm);
+}
+
 void MainMenu::handleClick(float mx, float my, GameState &gs) {
   if (playButton.hitTest(mx, my)) {
-    const char *nm = nameField.text();
-    if (nm[0])
-      gs.playerProfile.setFromUtf8(nm);
+    applyOptionalName(gs);
     outcome = MainMenuResult::Play;
     done = true;
     return;
   }
   if (replayButton.hitTest(mx, my)) {
+    applyOptionalName(gs);
     outcome = MainMenuResult::ReplayLast;
     done = true;
     return;
@@ -103,8 +111,6 @@ void MainMenu::drawFrame(GameState &gs) {
   if (!surface)
     return;
 
-  gs.reloadScoresFromDisk();
-
   const SDL_PixelFormatDetails *fmt =
       SDL_GetPixelFormatDetails(surface->format);
   if (!fmt)
@@ -113,29 +119,21 @@ void MainMenu::drawFrame(GameState &gs) {
   const uint32_t bg = SDL_MapRGBA(fmt, nullptr, 24, 32, 48, 255);
   SDL_FillSurfaceRect(surface, nullptr, bg);
 
+  constexpr float kMenuTextMaxW = 920.f - 48.f - 24.f;
+
   FontRenderer::drawText(surface, 48.0f, 28.0f, 0.52f, "Macaroni Pirates", 240,
-                         220, 160);
-  FontRenderer::drawText(surface, 48.0f, 88.0f, 0.28f, "Name (for scoreboard)",
-                         200, 200, 210);
+                         220, 160, kMenuTextMaxW);
+  FontRenderer::drawText(surface, 48.0f, 88.0f, 0.34f, "Your name", 230, 228,
+                         210, kMenuTextMaxW);
+
+  FontRenderer::drawText(surface, 48.0f, 124.0f, 0.24f,
+                         "Optional. Shown next to scores\nwhen you play.", 170,
+                         175, 195, kMenuTextMaxW);
 
   nameField.draw(surface, 0.28f);
   playButton.draw(surface, "Play", 0.28f);
-  replayButton.draw(surface, "Replay last", 0.28f);
+  replayButton.draw(surface, "Replay", 0.28f);
   quitButton.draw(surface, "Quit", 0.28f);
 
-  FontRenderer::drawText(surface, 920.0f, 36.0f, 0.34f, "Top 5", 230, 220, 200);
-
-  const float listX = 920.0f;
-  float listY = 80.0f;
-  ScoreStore::Entry rows[SCORE_STORE_LEADERBOARD_DISPLAY_SLOTS]{};
-  gs.scoreStore.topForDisplay(rows);
-  for (size_t i = 0; i < SCORE_STORE_LEADERBOARD_DISPLAY_SLOTS; ++i) {
-    const ScoreStore::Entry &ent = rows[i];
-    if (!ent.name[0])
-      continue;
-    char line[80];
-    std::snprintf(line, sizeof line, "%zu. %s  %d", i + 1, ent.name, ent.score);
-    FontRenderer::drawText(surface, listX, listY, 0.26f, line, 210, 210, 220);
-    listY += 28.0f;
-  }
+  LeaderboardView::drawMainMenuStrip(surface, gs.scoreStore);
 }

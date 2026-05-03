@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdio>
-
 #include "ui/ui_button.hpp"
 #include "ui/ui_text_field.hpp"
 
@@ -23,6 +21,7 @@ public:
 private:
   void drawFrame(GameState &gs);
   void handleClick(float mx, float my, GameState &gs);
+  void applyOptionalName(GameState &gs);
 
   SDL_Window *window = nullptr;
   UITextField nameField{};

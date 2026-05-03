@@ -514,6 +514,30 @@ src/ui/game_ui.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/game_ui.cpp.s
 .PHONY : src/ui/game_ui.cpp.s
 
+src/ui/leaderboard_view.o: src/ui/leaderboard_view.cpp.o
+.PHONY : src/ui/leaderboard_view.o
+
+# target to build an object file
+src/ui/leaderboard_view.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/leaderboard_view.cpp.o
+.PHONY : src/ui/leaderboard_view.cpp.o
+
+src/ui/leaderboard_view.i: src/ui/leaderboard_view.cpp.i
+.PHONY : src/ui/leaderboard_view.i
+
+# target to preprocess a source file
+src/ui/leaderboard_view.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/leaderboard_view.cpp.i
+.PHONY : src/ui/leaderboard_view.cpp.i
+
+src/ui/leaderboard_view.s: src/ui/leaderboard_view.cpp.s
+.PHONY : src/ui/leaderboard_view.s
+
+# target to generate assembly for a file
+src/ui/leaderboard_view.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/leaderboard_view.cpp.s
+.PHONY : src/ui/leaderboard_view.cpp.s
+
 src/ui/main_menu.o: src/ui/main_menu.cpp.o
 .PHONY : src/ui/main_menu.o
 
@@ -667,6 +691,9 @@ help:
 	@echo "... src/ui/game_ui.o"
 	@echo "... src/ui/game_ui.i"
 	@echo "... src/ui/game_ui.s"
+	@echo "... src/ui/leaderboard_view.o"
+	@echo "... src/ui/leaderboard_view.i"
+	@echo "... src/ui/leaderboard_view.s"
 	@echo "... src/ui/main_menu.o"
 	@echo "... src/ui/main_menu.i"
 	@echo "... src/ui/main_menu.s"

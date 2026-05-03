@@ -36,8 +36,23 @@ void UIButton::draw(SDL_Surface *surface, const char *label,
                  (int)std::floor(w - 4), (int)std::floor(h - 4)};
   SDL_FillSurfaceRect(surface, &inner, fill);
 
-  const float tw = FontRenderer::estimateTextWidth(label, textScale);
-  const float tx = x + (w - tw) * 0.5f;
-  const float ty = y + (h - textScale * 32.0f) * 0.5f;
-  FontRenderer::drawText(surface, tx, ty, textScale, label, 230, 235, 245);
+  const float hPad = 8.0f;
+  const float maxLabelW = std::max(8.0f, w - hPad);
+  float s = textScale;
+  float tw = FontRenderer::estimateTextWidth(label, s);
+  for (int iter = 0; iter < 10 && tw > maxLabelW && s > 0.14f; ++iter) {
+    s *= 0.9f;
+    tw = FontRenderer::estimateTextWidth(label, s);
+  }
+
+  float tx = x + (w - tw) * 0.5f;
+  const float minTx = x + 4.f;
+  if (tx < minTx)
+    tx = minTx;
+  float clipW = x + w - 4.f - tx;
+  if (clipW < 8.f)
+    clipW = maxLabelW;
+
+  const float ty = y + (h - s * 32.0f) * 0.5f;
+  FontRenderer::drawText(surface, tx, ty, s, label, 230, 235, 245, clipW);
 }

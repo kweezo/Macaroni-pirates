@@ -1,133 +1,371 @@
 #include "enemy.hpp"
 
-#include "enemy_tex"
+#include "enemy_tex_extern.hpp"
 #include "enemy_inv_tex"
+#include "enemy_tex"
+#include "trash_tex_extern.hpp"
+#include "trash_tex"
 
+#include "game/ally/ally.hpp"
 #include "manager/game_state.hpp"
 #include "math/aabb.hpp"
 
-EnemyManager::EnemyManager(): Process(5000) {
+#include <atomic>
+#include <cmath>
+#include <mutex>
 
-}
+EnemyManager::EnemyManager() : Process(5000) {}
 
 void EnemyManager::init() {
-    lastTime = NANOS; //to prevent the multiplication catastrophe of '26 from happening again
-    tex = Texture(enemyTexDat, enemyTexWidth, enemyTexHeight);
-    invTex = Texture(enemyInvTexDat, enemyInvTexWidth, enemyInvTexHeight);
-    addDependency((Drawable*)&gameState.map);
+  lastTime = NANOS;
+  tex = Texture(enemyTexDat, enemyTexWidth, enemyTexHeight);
+  invTex =
+      Texture(enemyInvTexDat, enemyInvTexWidth, enemyInvTexHeight);
+  trashTex = Texture(trashTexDat, trashTexWidth, trashTexHeight);
+  if (!drawLinkedToMap) {
+    addDependency((Drawable *)&gameState.map);
+    drawLinkedToMap = true;
+  }
 
-    spawnInstances(10);
+  {
+    std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
+    spawnStageWave();
+  }
 }
 
 void EnemyManager::run() {
-    for(Instance& instance : instances) {
-        if(!instance.active) continue;
-        updateInstance(instance);
-    }
+  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
 
-    dt = (NANOS - lastTime) / (float)NS;
-    lastTime = NANOS;
-}
+  if (gameState.isGameOver())
+    return;
 
-void EnemyManager::destruct() {
+  dt = (NANOS - lastTime) / (float)NS;
+  lastTime = NANOS;
 
-}
-
-void EnemyManager::render(SDL_Surface* surface) {
-    for(Instance& instance : instances) {
-        if(!instance.active) continue;
-        
-        if(instance.invulnerable) {
-            invTex.draw(surface,
-            {(uint16_t)instance.x, (uint16_t)instance.y, ENEMY_SIZE, ENEMY_SIZE},
-            {255, 200, 200});
-        } else {
-            tex.draw(surface,
-            {(uint16_t)instance.x, (uint16_t)instance.y, ENEMY_SIZE, ENEMY_SIZE},
-            {255, 255, 255});
-        }
-    }
-}
-
-bool EnemyManager::isInstanceDepositing(Instance& instance) {
-    return NANOS - instance.oceanTouchTime < ENEMY_TRASH_DEPOSIT_TIME;
-}
-
-void EnemyManager::updateInstance(Instance& instance) {
-    instance.invulnerable = false;
-
-    if(isInstanceDepositing(instance)) {
-        if(instance.leftNeigbour != -1 && isInstanceDepositing(instances[instance.leftNeigbour]))
-            instance.invulnerable = true;
-        if(instance.rightNeighbour != -1 && isInstanceDepositing(instances[instance.rightNeighbour]))
-            instance.invulnerable = true;
-        return;
-    }
-
-    if(instance.dir) {
-        instance.y += instance.speed * dt;
-    } else {
-        instance.y -= instance.speed * dt;
-    }
-
-    if(!gameState.map.onBeach(instance.x, instance.y) && !instance.dir) {
-        instance.dir = true;
-        instance.oceanTouchTime = NANOS;
-    }
-
-    if(instance.y > WINDOW_HEIGHT - ENEMY_SIZE)
-        instance.dir = false;
-
-
-}
-
-bool EnemyManager::hitEnemyByRect(float x, float y, float w, float h,
-                                  int maxHits) {
-  int left = maxHits;
-  bool any = false;
   for (Instance &instance : instances) {
-    if (!instance.active || left <= 0)
+    if (!instance.active)
+      continue;
+    updateInstance(instance);
+  }
+
+  gameState.allyManager.simulatePatrolAndAllyEnemyCollisions(dt);
+
+  simulateFloatingTrash();
+
+  tryAdvanceEnemyWaveLocked();
+}
+
+void EnemyManager::destruct() {}
+
+void EnemyManager::render(SDL_Surface *surface) {
+  if (gameState.replay.isReplayActive())
+    return;
+
+  for (TrashPiece const &tp : floatingTrash) {
+    if (!tp.active)
+      continue;
+    if (!gameState.isRectInVisionBox(tp.x, tp.y, (float)TRASH_FLOAT_DIM,
+                                      (float)TRASH_FLOAT_DIM))
+      continue;
+    trashTex.draw(surface,
+                  {(uint16_t)std::floor(tp.x), (uint16_t)std::floor(tp.y),
+                   TRASH_FLOAT_DIM, TRASH_FLOAT_DIM},
+                  {255, 255, 255});
+  }
+  for (Instance &instance : instances) {
+    if (!instance.active)
+      continue;
+
+    if (!gameState.isRectInVisionBox(instance.x, instance.y, (float)ENEMY_SIZE,
+                                     (float)ENEMY_SIZE))
+      continue;
+
+    if (instance.invulnerable) {
+      invTex.draw(
+          surface,
+          {(uint16_t)instance.x, (uint16_t)instance.y, ENEMY_SIZE, ENEMY_SIZE},
+          {255, 200, 200});
+    } else {
+      tex.draw(surface,
+               {(uint16_t)instance.x, (uint16_t)instance.y, ENEMY_SIZE,
+                ENEMY_SIZE},
+               {255, 255, 255});
+    }
+  }
+}
+
+bool EnemyManager::depositing(Instance const &instance) const {
+  return NANOS - instance.oceanTouchTime < ENEMY_TRASH_DEPOSIT_TIME;
+}
+
+void EnemyManager::updateInstance(Instance &instance) {
+  if (!depositing(instance))
+    instance.lastTrashSpawnNano = 0;
+
+  instance.invulnerable = false;
+
+  if (depositing(instance)) {
+    instance.invulnerable = true;
+    if (!gameState.paused.load(std::memory_order_relaxed)) {
+      if (instance.lastTrashSpawnNano == 0) {
+        spawnFloatingTrash(instance);
+        instance.lastTrashSpawnNano = 1;
+      }
+    }
+    return;
+  }
+
+  if (instance.dir) {
+    instance.y += instance.speed * dt;
+  } else {
+    instance.y -= instance.speed * dt;
+  }
+
+  if (!gameState.map.onBeach(instance.x, instance.y) && !instance.dir) {
+    instance.dir = true;
+    instance.oceanTouchTime = NANOS;
+  }
+
+  if (instance.y > WINDOW_HEIGHT - ENEMY_SIZE)
+    instance.dir = false;
+}
+
+void EnemyManager::applyCollisionWithAlly(float ax, float ay, float aw,
+                                          float ah, float &allySpeedX) {
+  constexpr float pad = 12.f;
+
+  const float ew = (float)ENEMY_SIZE;
+  const float eh = (float)ENEMY_SIZE;
+  const float allyTop = ay;
+
+  bool flipThisAllysPatrol = false;
+
+  for (Instance &instance : instances) {
+    if (!instance.active || depositing(instance))
+      continue;
+    if (!rectsOverlap(instance.x, instance.y, ew, eh, ax, ay, aw, ah))
+      continue;
+
+    const float enemyFoot = instance.y + eh;
+    const float allyMidY = ay + ah * 0.5f;
+    const float enemyMidY = instance.y + eh * 0.5f;
+
+    const bool topContact =
+        instance.dir ||
+        (enemyMidY < allyMidY && enemyFoot <= allyTop + pad);
+
+    if (topContact)
+      instance.dir = false;
+    else
+      flipThisAllysPatrol = true;
+  }
+
+  if (flipThisAllysPatrol)
+    allySpeedX = -allySpeedX;
+}
+
+void EnemyManager::spawnStageWave() {
+  clearFloatingTrash();
+  lastPlayerEnemyScorePenaltyNs = 0;
+  for (Instance &instance : instances) {
+    instance.active = false;
+    instance.leftNeighbor = (uint32_t)-1;
+    instance.rightNeighbor = (uint32_t)-1;
+    instance.lastTrashSpawnNano = 0;
+  }
+  const StageEnemyWave cfg = gameState.enemyWaveConfig();
+  spawnInstances(cfg.enemyCount, cfg.enemySpeedMultiplier);
+}
+
+void EnemyManager::tryAdvanceEnemyWaveLocked() {
+  if (gameState.replay.isReplayActive())
+    return;
+  size_t alive = 0;
+  for (Instance &instance : instances) {
+    if (instance.active)
+      ++alive;
+  }
+  if (alive != 0)
+    return;
+  gameState.onEnemyWaveCleared();
+}
+
+bool EnemyManager::cannonballOverlapsDepositingEnemy(float x, float y, float w,
+                                                     float h) {
+  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
+  const float ew = (float)ENEMY_SIZE;
+  const float eh = (float)ENEMY_SIZE;
+  for (Instance &instance : instances) {
+    if (!instance.active || !depositing(instance))
+      continue;
+    if (rectsOverlap(x, y, w, h, instance.x, instance.y, ew, eh))
+      return true;
+  }
+  return false;
+}
+
+int EnemyManager::hitEnemyByRect(float x, float y, float w, float h,
+                                 int maxHits) {
+  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
+  int left = maxHits;
+  int hits = 0;
+  for (Instance &instance : instances) {
+    if (!instance.active || left <= 0 || depositing(instance))
       continue;
     if (rectsOverlap(x, y, w, h, instance.x, instance.y, (float)ENEMY_SIZE,
                      (float)ENEMY_SIZE)) {
       instance.active = false;
-      any = true;
+      ++hits;
       --left;
     }
   }
-  return any;
+  return hits;
 }
 
-void EnemyManager::hitTrashByRect(float, float, float, float) {}
+void EnemyManager::hitTrashByRect(float px, float py, float pw, float ph) {
+  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
+  const float tw = (float)TRASH_FLOAT_DIM;
+  const float th = (float)TRASH_FLOAT_DIM;
+  for (TrashPiece &tp : floatingTrash) {
+    if (!tp.active)
+      continue;
+    if (!rectsOverlap(px, py, pw, ph, tp.x, tp.y, tw, th))
+      continue;
+    tp.active = false;
+    gameState.score.fetch_add(SCORE_POINTS_TRASH_COLLECT,
+                              std::memory_order_relaxed);
+  }
+}
 
-void EnemyManager::spawnInstances(size_t count) {
-    assert(count <= MAX_ENEMY_COUNT);
-    const uint32_t INTERVAL = WINDOW_WIDTH / MAX_ENEMY_COUNT; // we spawn enemies in slices
-    std::array<size_t, MAX_ENEMY_COUNT> filledSlots;
-    filledSlots.fill(-1);
+void EnemyManager::applyPlayerEnemyScorePenalty(float px, float py, float pw,
+                                                float ph) {
+  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
+  const uint64_t now = static_cast<uint64_t>(NANOS);
+  if (now - lastPlayerEnemyScorePenaltyNs <
+      PLAYER_ENEMY_SCORE_PENALTY_COOLDOWN_NS)
+    return;
+  const float ew = (float)ENEMY_SIZE;
+  const float eh = (float)ENEMY_SIZE;
+  for (Instance const &instance : instances) {
+    if (!instance.active)
+      continue;
+    if (!rectsOverlap(px, py, pw, ph, instance.x, instance.y, ew, eh))
+      continue;
+    lastPlayerEnemyScorePenaltyNs = now;
+    gameState.subtractScoreBounded(SCORE_PENALTY_PLAYER_ENEMY_TOUCH);
+    return;
+  }
+}
 
-    uint32_t enemiesSpawned = 0;
+bool EnemyManager::cannonballDissolvesTrash(float x, float y, float w,
+                                            float h) {
+  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
+  const float tw = (float)TRASH_FLOAT_DIM;
+  const float th = (float)TRASH_FLOAT_DIM;
+  for (TrashPiece &tp : floatingTrash) {
+    if (!tp.active)
+      continue;
+    if (!rectsOverlap(x, y, w, h, tp.x, tp.y, tw, th))
+      continue;
+    tp.active = false;
+    return true;
+  }
+  return false;
+}
 
-    for(int x = 0; enemiesSpawned != count; x += INTERVAL) {
-        if(x >= WINDOW_WIDTH) x = 0;
-        if(rand() % MAX_ENEMY_COUNT || filledSlots[x / INTERVAL] != -1) continue;
+void EnemyManager::spawnInstances(size_t count, float speedMultiplier) {
+  assert(count <= MAX_ENEMY_COUNT);
+  const uint32_t INTERVAL = WINDOW_WIDTH / MAX_ENEMY_COUNT;
+  std::array<size_t, MAX_ENEMY_COUNT> filledSlots;
+  filledSlots.fill(static_cast<size_t>(-1));
 
-        instances[enemiesSpawned].x = x;
-        instances[enemiesSpawned].y = WINDOW_HEIGHT - ENEMY_SIZE;
-        instances[enemiesSpawned].active = true;
-        instances[enemiesSpawned].speed = BASE_ENEMY_SPEED + (rand() % 100 - 50) / 100.0f * ENEMY_SPEED_DEVIATION;
+  uint32_t enemiesSpawned = 0;
 
-        filledSlots[x / INTERVAL] = enemiesSpawned;
+  for (int x = 0; enemiesSpawned != count; x += (int)INTERVAL) {
+    if (x >= (int)WINDOW_WIDTH)
+      x = 0;
+    const size_t slotIdx = (size_t)x / INTERVAL;
+    if (rand() % MAX_ENEMY_COUNT || filledSlots[slotIdx] != static_cast<size_t>(-1))
+      continue;
 
-        enemiesSpawned++;
+    Instance &sp = instances[enemiesSpawned];
+    sp.x = (float)x;
+    sp.y = WINDOW_HEIGHT - ENEMY_SIZE;
+    sp.active = true;
+    sp.speed = (BASE_ENEMY_SPEED + (rand() % 100 - 50) / 100.0f *
+                                      ENEMY_SPEED_DEVIATION) *
+               speedMultiplier;
+    sp.oceanTouchTime = 0;
+    sp.dir = false;
+    sp.invulnerable = false;
+    sp.lastTrashSpawnNano = 0;
+
+    filledSlots[slotIdx] = enemiesSpawned;
+    enemiesSpawned++;
+  }
+
+  for (Instance &instance : instances) {
+    if (!instance.active)
+      continue;
+
+    const size_t slot = (size_t)instance.x / INTERVAL;
+    if (slot != 0)
+      instance.leftNeighbor = (uint32_t)filledSlots[slot - 1];
+    if (slot < MAX_ENEMY_COUNT - 1)
+      instance.rightNeighbor = (uint32_t)filledSlots[slot + 1];
+  }
+}
+
+void EnemyManager::clearFloatingTrash() {
+  for (TrashPiece &tp : floatingTrash)
+    tp.active = false;
+}
+
+void EnemyManager::simulateFloatingTrash() {
+  if (gameState.replay.isReplayActive())
+    return;
+  if (gameState.paused.load(std::memory_order_relaxed))
+    return;
+  constexpr float kMargin = 72.f;
+  for (TrashPiece &tp : floatingTrash) {
+    if (!tp.active)
+      continue;
+    tp.x += tp.vx * dt;
+    tp.y += tp.vy * dt;
+    if (tp.x < -kMargin || tp.y < -kMargin ||
+        tp.x > (float)WINDOW_WIDTH + kMargin ||
+        tp.y > (float)WINDOW_HEIGHT + kMargin)
+      tp.active = false;
+  }
+}
+
+void EnemyManager::spawnFloatingTrash(Instance const &instance) {
+  TrashPiece *slot = nullptr;
+  for (TrashPiece &tp : floatingTrash) {
+    if (!tp.active) {
+      slot = &tp;
+      break;
     }
+  }
+  if (!slot)
+    return;
 
-    for(Instance& instance : instances) {
-        if(!instance.active) continue;
-
-        if(instance.x / INTERVAL != 0)
-            instance.leftNeigbour = filledSlots[instance.x / INTERVAL - 1];
-        if(instance.x / INTERVAL < MAX_ENEMY_COUNT - 1)
-            instance.rightNeighbour = filledSlots[instance.x / INTERVAL + 1];
-    }
+  const unsigned gx = (unsigned)((int)(instance.x) >> 2);
+  const unsigned gy = (unsigned)((int)(instance.y) >> 2);
+  unsigned mix = gx ^ (gy * 2654435761u);
+  mix ^= (unsigned)((instance.lastTrashSpawnNano >> 11) ^
+                    (instance.lastTrashSpawnNano << 5));
+  constexpr float kTrashSideFracMin = 0.35f;
+  constexpr float kTrashSideFracSpan = 0.5f;
+  const float sideFrac =
+      kTrashSideFracMin +
+      (float)(mix % 101u) / 100.f * kTrashSideFracSpan;
+  const float sideSign = (mix & 1u) ? 1.f : -1.f;
+  const float spd = TRASH_DRIFT_SPEED;
+  const float vxMag = spd * sideFrac;
+  slot->vx = sideSign * vxMag;
+  slot->vy = -std::sqrt(std::fmax(0.f, spd * spd - vxMag * vxMag));
+  slot->x = instance.x + 0.5f * ((float)ENEMY_SIZE - (float)TRASH_FLOAT_DIM);
+  slot->y = instance.y + 0.5f * ((float)ENEMY_SIZE - (float)TRASH_FLOAT_DIM);
+  slot->active = true;
 }

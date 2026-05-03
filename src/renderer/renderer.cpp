@@ -69,7 +69,7 @@ struct CircleLookup {
   static constexpr std::array<int16_t, 2 * CIRCLE_MASK_RADIUS + 1> MaxXPerRow =
       buildMaxXPerRow<PixelCount>(Offsets);
 };
-} // namespace
+}
 
 Renderer::Renderer() {}
 
@@ -83,8 +83,6 @@ void Renderer::initOnMainThread() {
   }
 }
 
-void Renderer::init() {}
-
 void Renderer::shutdownVideoOnMain() {
   if (renderer) {
     SDL_DestroyRenderer(renderer);
@@ -96,16 +94,17 @@ void Renderer::shutdownVideoOnMain() {
   }
 }
 
-void Renderer::run() {
+void Renderer::frame() {
   SDL_Event e;
   while (SDL_PollEvent(&e)) {
     if (e.type == SDL_EVENT_QUIT) {
-      gameState.replay.flushRecording();
-      gameState.processManager.stop();
+      gameState.shutdownFromUser();
     } else if (e.type == SDL_EVENT_KEY_DOWN && e.key.down && !e.key.repeat &&
                e.key.key == SDLK_ESCAPE) {
-      const bool p = gameState.paused.load(std::memory_order_relaxed);
-      gameState.paused.store(!p, std::memory_order_relaxed);
+      if (!gameState.isGameOver()) {
+        const bool p = gameState.paused.load(std::memory_order_relaxed);
+        gameState.paused.store(!p, std::memory_order_relaxed);
+      }
     } else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.down &&
                e.button.button == SDL_BUTTON_LEFT) {
       dispatchUiClick(e.button.x, e.button.y);
@@ -117,8 +116,6 @@ void Renderer::run() {
       SDL_GetPixelFormatDetails(surf->format);
   const uint32_t blueColor =
       SDL_MapRGBA(formatDetails, nullptr, 96, 140, 220, 255);
-  // Map only repaints the lower band; skipping enemy/ally draws during replay
-  // would otherwise leave last frame's pixels in the water region.
   if (gameState.replay.isReplayActive())
     SDL_FillSurfaceRect(surf, nullptr, blueColor);
 
@@ -148,14 +145,13 @@ void Renderer::dispatchUiClick(float mx, float my) {
   gameUi.handleClick(mx, my, gameState);
 }
 
-void Renderer::destruct() {}
-
 void Renderer::createWindow() {
-  window =
-      SDL_CreateWindow("this shit is so async", WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+  window = SDL_CreateWindow("Macaroni Pirates", WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 
   if (!window)
     throw std::runtime_error("Failed to create window");
+  SDL_ShowWindow(window);
+  SDL_RaiseWindow(window);
 }
 
 void Renderer::createRenderer() {
@@ -242,7 +238,7 @@ size_t Renderer::getNextFreeDrawIndex(Drawable *drawable) {
     return i;
   }
 
-  throw std::runtime_error("Out of free rendeer slots");
+  throw std::runtime_error("Out of free render slots");
 }
 
 void Renderer::removeDrawIndex(size_t i) {

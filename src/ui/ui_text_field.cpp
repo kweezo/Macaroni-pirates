@@ -4,8 +4,27 @@
 
 #include <SDL3/SDL.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
+
+namespace {
+
+void copyAsciiPrintable(char *dest, size_t destCap, const char *utf8) {
+  dest[0] = '\0';
+  if (!utf8 || !utf8[0] || destCap == 0)
+    return;
+  size_t w = 0;
+  for (size_t i = 0; utf8[i] && w + 1 < destCap; ++i) {
+    const unsigned char c = (unsigned char)utf8[i];
+    if (c < 32 || c > 126)
+      continue;
+    dest[w++] = (char)c;
+  }
+  dest[w] = '\0';
+}
+
+}
 
 void UITextField::setRect(float ax, float ay, float aw, float ah) {
   x = ax;
@@ -15,6 +34,14 @@ void UITextField::setRect(float ax, float ay, float aw, float ah) {
 }
 
 void UITextField::setWindow(SDL_Window *window) { sdlWindow = window; }
+
+void UITextField::setText(const char *utf8) {
+  copyAsciiPrintable(textChars, MaxChars + 1, utf8);
+}
+
+void UITextField::setPlaceholder(const char *utf8) {
+  copyAsciiPrintable(placeholderChars, MaxChars + 1, utf8);
+}
 
 bool UITextField::hitTest(float px, float py) const {
   return px >= x && px < x + w && py >= y && py < y + h;
@@ -31,12 +58,38 @@ void UITextField::draw(SDL_Surface *surface, float textScale) const {
   const uint32_t bg =
       SDL_MapRGBA(fmt, nullptr, isFocused ? 40 : 28, isFocused ? 44 : 32,
                   isFocused ? 58 : 44, (uint8_t)255);
-  SDL_Rect r{(int)std::floor(x), (int)std::floor(y), (int)std::floor(w),
-             (int)std::floor(h)};
+
+  const int xi = (int)std::floor(x);
+  const int yi = (int)std::floor(y);
+  const int wi = (int)std::floor(w);
+  const int hi = (int)std::floor(h);
+  SDL_Rect r{xi, yi, wi, hi};
   SDL_FillSurfaceRect(surface, &r, bg);
 
-  FontRenderer::drawText(surface, x + 8.0f, y + 8.0f, textScale, textChars,
-                         220, 225, 235);
+  const uint8_t br = isFocused ? (uint8_t)150 : (uint8_t)92;
+  const uint8_t bgc = isFocused ? (uint8_t)168 : (uint8_t)104;
+  const uint8_t bb = isFocused ? (uint8_t)190 : (uint8_t)120;
+  const uint32_t edge = SDL_MapRGBA(fmt, nullptr, br, bgc, bb, (uint8_t)255);
+  const int tk = 2;
+  SDL_Rect top{xi, yi, wi, tk};
+  SDL_Rect bot{xi, yi + hi - tk, wi, tk};
+  SDL_Rect lef{xi, yi, tk, hi};
+  SDL_Rect rig{xi + wi - tk, yi, tk, hi};
+  SDL_FillSurfaceRect(surface, &top, edge);
+  SDL_FillSurfaceRect(surface, &bot, edge);
+  SDL_FillSurfaceRect(surface, &lef, edge);
+  SDL_FillSurfaceRect(surface, &rig, edge);
+
+  const bool showPlaceholder =
+      textChars[0] == '\0' && placeholderChars[0] != '\0';
+  const float innerW = std::max(4.f, w - 16.f);
+  if (showPlaceholder) {
+    FontRenderer::drawText(surface, x + 8.0f, y + 8.0f, textScale,
+                           placeholderChars, 110, 118, 132, innerW);
+  } else {
+    FontRenderer::drawText(surface, x + 8.0f, y + 8.0f, textScale, textChars,
+                           220, 225, 235, innerW);
+  }
 }
 
 bool UITextField::handleMouseDown(float mx, float my) {

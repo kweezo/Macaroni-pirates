@@ -99,10 +99,11 @@ void drawFontGlyph(SDL_Surface *surf, int dstW, int dstH, const Texture &atlas,
   maskedBlit(surf, dstW, dstH, atlas, sx, sy, cellW, cellH, dx, dy, dW, dH, r,
              g, b);
 }
-} // namespace
+}
 
 void FontRenderer::drawText(SDL_Surface *surface, float x, float y, float scale,
-                            const char *text, uint8_t r, uint8_t g, uint8_t b) {
+                            const char *text, uint8_t r, uint8_t g, uint8_t b,
+                            float maxWidthPx) {
   if (!text || !surface || !surface->pixels)
     return;
 
@@ -129,6 +130,8 @@ void FontRenderer::drawText(SDL_Surface *surface, float x, float y, float scale,
       penY += outH;
       continue;
     }
+    if (maxWidthPx > 0.f && penX + outW > x + maxWidthPx)
+      return;
     drawFontGlyph(surface, dstW, dstH, atlas, cellW, cellH, *p, penX, penY,
                   outW, outH, r, g, b);
     penX += outW;

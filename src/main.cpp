@@ -4,27 +4,26 @@
 #include <SDL3/SDL.h>
 
 int main() {
-  MainMenu menu;
-  switch (menu.run(gameState)) {
-  case MainMenuResult::Error:
-  case MainMenuResult::Quit:
-    return 0;
-  case MainMenuResult::Play:
+  for (;;) {
+    MainMenu menu;
+    const MainMenuResult pick = menu.run(gameState);
+
+    if (pick == MainMenuResult::Error || pick == MainMenuResult::Quit) {
+      if (SDL_WasInit(SDL_INIT_VIDEO))
+        SDL_Quit();
+      return 0;
+    }
+
     if (!SDL_WasInit(SDL_INIT_VIDEO) && !SDL_Init(SDL_INIT_VIDEO))
       return 1;
-    gameState.start(false);
-    break;
-  case MainMenuResult::ReplayLast:
-    if (!SDL_WasInit(SDL_INIT_VIDEO) && !SDL_Init(SDL_INIT_VIDEO))
-      return 1;
-    gameState.start(true);
-    break;
+
+    gameState.start(pick == MainMenuResult::ReplayLast);
+
+    while (gameState.gameRunning.load(std::memory_order_relaxed)) {
+      gameState.renderer.frame();
+    }
+
+    gameState.processManager.joinWorkers();
+    gameState.renderer.shutdownVideoOnMain();
   }
-
-  gameState.processManager.joinWorkers();
-  gameState.renderer.shutdownVideoOnMain();
-
-  if (SDL_WasInit(SDL_INIT_VIDEO))
-    SDL_Quit();
-  return 0;
 }

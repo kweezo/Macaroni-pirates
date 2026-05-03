@@ -1,14 +1,18 @@
 #include "player.hpp"
 
 #include "manager/game_state.hpp"
+#include "macros.hpp"
 
 #include <cmath>
+#include <cstdlib>
+#include <mutex>
 
 #include "player_alt_tex"
 #include "player_tex"
 
 namespace {
 constexpr float PLAYER_ALT_DRAW_SCALE = 0.68f;
+constexpr float PLAYER_TOP_SPAWN_Y = 24.0f;
 }
 
 Player::Player() : tex(), texAlt(), x(), y(), Process(1000), lastShotPress() {}
@@ -17,14 +21,46 @@ float Player::centerX() const { return x + PLAYER_WIDTH / 2.0f; }
 
 float Player::centerY() const { return y + PLAYER_HEIGHT / 2.0f; }
 
+void Player::prepareForNewRound() { healthPoints = PLAYER_MAX_HEALTH; }
+
+void Player::placeRandomTopSpawn() {
+  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
+  y = PLAYER_TOP_SPAWN_Y;
+  const int span =
+      WINDOW_WIDTH > PLAYER_WIDTH ? WINDOW_WIDTH - PLAYER_WIDTH : 1;
+  x = static_cast<float>(rand() % span);
+}
+
+void Player::takeDamage(int amount) {
+  if (amount <= 0)
+    return;
+  if (healthPoints <= 0)
+    return;
+  healthPoints -= amount;
+  if (healthPoints < 0)
+    healthPoints = 0;
+  if (healthPoints == 0)
+    gameState.triggerGameOver();
+}
+
+int Player::health() const { return healthPoints; }
+
 void Player::init() {
   tex = Texture(playerTexDat, playerTexWidth, playerTexHeight);
   texAlt = Texture(playerAltTexDat, playerAltTexWidth, playerAltTexHeight);
-  addDependency((Drawable *)&gameState.map);
+  if (!drawLinkedToMap) {
+    addDependency((Drawable *)&gameState.map);
+    drawLinkedToMap = true;
+  }
   lastTime = NANOS;
 }
 
 void Player::run() {
+  if (gameState.isGameOver()) {
+    lastTime = NANOS;
+    return;
+  }
+
   if (gameState.paused.load(std::memory_order_relaxed)) {
     lastTime = NANOS;
     return;
@@ -32,6 +68,12 @@ void Player::run() {
 
   if (gameState.replay.isReplayActive()) {
     gameState.replay.syncReplay(x, y);
+    lastTime = NANOS;
+    return;
+  }
+
+  if (gameState.enemyStageTimeExpired()) {
+    gameState.triggerGameOver();
     lastTime = NANOS;
     return;
   }
@@ -46,9 +88,11 @@ void Player::run() {
                                    x, y);
 
   {
-    std::lock_guard<std::mutex> guard(gameState.worldSimMutex);
+    std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
     gameState.enemyManager.hitTrashByRect(x, y, (float)PLAYER_WIDTH,
                                           (float)PLAYER_HEIGHT);
+    gameState.enemyManager.applyPlayerEnemyScorePenalty(
+        x, y, (float)PLAYER_WIDTH, (float)PLAYER_HEIGHT);
   }
 
   shooting();
@@ -64,11 +108,33 @@ void Player::run() {
     float hitW = 0.0f;
     float hitH = 0.0f;
     cannonball.collisionRect(hitX, hitY, hitW, hitH);
-    if (gameState.enemyManager.hitEnemyByRect(hitX, hitY, hitW, hitH, 1)) {
+
+    if (!gameState.isRectInVisionBox(hitX, hitY, hitW, hitH)) {
+      cannonball.deactivate();
+      continue;
+    }
+
+    const int kills =
+        gameState.enemyManager.hitEnemyByRect(hitX, hitY, hitW, hitH, 1);
+    if (kills > 0) {
+      gameState.score.fetch_add(kills * SCORE_POINTS_ENEMY_KILL,
+                                std::memory_order_relaxed);
+      cannonball.deactivate();
+      continue;
+    }
+    if (gameState.enemyManager.cannonballDissolvesTrash(hitX, hitY, hitW,
+                                                        hitH)) {
+      cannonball.deactivate();
+      continue;
+    }
+    if (gameState.enemyManager.cannonballOverlapsDepositingEnemy(
+            hitX, hitY, hitW, hitH)) {
+      takeDamage(PLAYER_DAMAGE_SHOOT_DEPOSITING_TRASH);
       cannonball.deactivate();
       continue;
     }
     if (gameState.allyManager.onCannonballHit(hitX, hitY, hitW, hitH)) {
+      gameState.subtractScoreBounded(SCORE_PENALTY_ALLY_HIT);
       cannonball.deactivate();
       continue;
     }
@@ -101,8 +167,11 @@ void Player::movement() {
   dx *= speed / scalar;
   dy *= speed / scalar;
 
-  x += dx * dt;
-  y += dy * dt;
+  {
+    std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
+    x += dx * dt;
+    y += dy * dt;
+  }
 }
 
 void Player::shooting() {
@@ -114,19 +183,16 @@ void Player::shooting() {
     return;
   }
 
-  if (!space || lastShotPress)
-    goto player_shoot_end;
-
-  for (Cannonball &cannonball : cannonballs) {
-    if (cannonball.isActive())
-      continue;
-
-    cannonball = Cannonball(x + CANNONBALL_OFFSET_X, y + CANNONBALL_OFFSET_Y,
-                            BASE_CANNONBALL_SPEED);
-    break;
+  if (space && !lastShotPress) {
+    for (Cannonball &cannonball : cannonballs) {
+      if (cannonball.isActive())
+        continue;
+      cannonball = Cannonball(x + CANNONBALL_OFFSET_X, y + CANNONBALL_OFFSET_Y,
+                              BASE_CANNONBALL_SPEED);
+      break;
+    }
   }
 
-player_shoot_end:
   lastShotPress = space;
 }
 
@@ -139,6 +205,13 @@ void Player::destruct() {}
 void Player::render(SDL_Surface *surface) {
   for (Cannonball &cannonball : cannonballs) {
     if (!cannonball.isActive())
+      continue;
+    float crx = 0.f;
+    float cry = 0.f;
+    float crw = 0.f;
+    float crh = 0.f;
+    cannonball.collisionRect(crx, cry, crw, crh);
+    if (!gameState.isRectInVisionBox(crx, cry, crw, crh))
       continue;
     cannonball.draw(surface);
   }

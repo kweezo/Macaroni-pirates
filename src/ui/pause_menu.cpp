@@ -3,6 +3,7 @@
 #include "macros.hpp"
 #include "manager/game_state.hpp"
 #include "renderer/font/font_renderer.hpp"
+#include "ui/leaderboard_view.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -27,6 +28,8 @@ void PauseMenu::draw(SDL_Surface *surface, GameState &gs) const {
   resumeButton.draw(surface, "Resume", 0.3f);
   saveScoreButton.draw(surface, "Save score", 0.3f);
   quitButton.draw(surface, "Quit to OS", 0.3f);
+
+  LeaderboardView::drawPauseStrip(surface, gs.scoreStore);
 }
 
 void PauseMenu::handleClick(float mx, float my, GameState &gs) {
@@ -40,7 +43,6 @@ void PauseMenu::handleClick(float mx, float my, GameState &gs) {
     return;
   }
   if (quitButton.hitTest(mx, my)) {
-    gs.replay.flushRecording();
-    gs.processManager.stop();
+    gs.shutdownFromUser();
   }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <mutex>
 
@@ -16,12 +17,25 @@
 
 #include "macros.hpp"
 
+struct StageEnemyWave {
+  float beachRatio;
+  std::size_t enemyCount;
+  float enemySpeedMultiplier;
+};
+
 struct GameState {
   GameState();
   void start(bool replayFromMenu);
   float visionCenterX() const;
   float visionCenterY() const;
   bool isRectInVisionBox(float x, float y, float w, float h) const;
+
+  static constexpr int kEnemyStageCount = 3;
+
+  StageEnemyWave enemyWaveConfig() const;
+  int stageNumberOneBased() const;
+  void subtractScoreBounded(int amount);
+  void onEnemyWaveCleared();
 
   EnemyManager enemyManager;
   AllyManager allyManager;
@@ -38,10 +52,22 @@ struct GameState {
 
   std::atomic<int> score{};
   std::atomic<bool> paused{false};
+  std::atomic<bool> gameOver{false};
+  std::atomic<bool> gameRunning{false};
 
-  std::mutex worldSimMutex;
+  std::recursive_mutex worldSimMutex;
 
   void reloadScoresFromDisk();
+  void shutdownFromUser();
+  bool isGameOver() const;
+  void triggerGameOver();
+  void restartEnemyStageClock();
+  bool enemyStageTimeExpired() const;
+  int enemyStageSecondsRemainingForHud() const;
+
+private:
+  int enemyWaveIndex = 0;
+  uint64_t enemyStageStartedNs = 0;
 };
 
 extern GameState gameState;

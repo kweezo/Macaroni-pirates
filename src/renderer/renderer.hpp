@@ -7,28 +7,23 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
-#include <functional>
 #include <future>
 #include <mutex>
 #include <stdexcept>
 
-#include "manager/process/process.hpp"
 #include "ui/game_ui.hpp"
 
 #define DRAW_STACK_SIZE 64
 
-class Drawable; // fucking disgusting I have to do this but necessary
+class Drawable;
 
-class Renderer : public Process {
-  void init() override;
-  void run() override;
-  void destruct() override;
-
+class Renderer {
 public:
   Renderer();
 
   void initOnMainThread();
   void shutdownVideoOnMain();
+  void frame();
 
   size_t getNextFreeDrawIndex(Drawable *drawable);
   void removeDrawIndex(size_t i);

@@ -1,50 +1,100 @@
 #include "map.hpp"
+
 #include "manager/game_state.hpp"
+#include "macros.hpp"
 
 #include "sand_tex"
 
-#define SAND_TILE_SIZE 32
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <future>
 
-Map::Map(): beachRatio() {
+namespace {
+
+constexpr int kSandTile = 32;
+constexpr size_t kSandRowFutures =
+    (WINDOW_HEIGHT + kSandTile - 1) / kSandTile;
 
 }
 
-Map::Map(float beachRatio): beachRatio(beachRatio) {
+Map::Map() = default;
 
-}
+Map::Map(float r) : beachRatio(r) {}
+
+void Map::setBeachRatio(float ratio) { beachRatio = ratio; }
 
 void Map::init() {
-    sandTex = Texture(sandTexDat, sandTexWidth, sandTexHeight);
+  sandTex = Texture(sandTexDat, sandTexWidth, sandTexHeight);
 }
 
-void Map::run() {
+void Map::run() {}
 
+void Map::destruct() {}
+
+void Map::render(SDL_Surface *surface) {
+  std::array<std::future<void>, kSandRowFutures> futures{};
+
+  const uint16_t sandTop = static_cast<uint16_t>(
+      std::floor(beachRatio * (float)WINDOW_HEIGHT));
+
+  const float vr = (float)GameState::VISION_RADIUS;
+  const int clipMinX =
+      std::max(0, (int)std::floor(gameState.visionCenterX() - vr));
+  const int clipMaxX =
+      std::min(WINDOW_WIDTH, (int)std::ceil(gameState.visionCenterX() + vr));
+  const int clipMinY =
+      std::max(0, (int)std::floor(gameState.visionCenterY() - vr));
+  const int clipMaxY =
+      std::min(WINDOW_HEIGHT, (int)std::ceil(gameState.visionCenterY() + vr));
+
+  int i = 0;
+  for (uint16_t y = WINDOW_HEIGHT; y > sandTop && i < (int)futures.size();
+       y -= kSandTile) {
+    const int rowTop = (int)y;
+    const int rowBot = rowTop + kSandTile;
+    if (rowBot <= clipMinY || rowTop >= clipMaxY)
+      continue;
+
+    futures[static_cast<size_t>(i)] = std::async(
+        &Map::render_row, this, surface, y, clipMinX, clipMaxX, clipMinY,
+        clipMaxY);
+    ++i;
+  }
+
+  for (int j = 0; j < i; ++j) {
+    if (futures[static_cast<size_t>(j)].valid())
+      futures[static_cast<size_t>(j)].get();
+  }
 }
 
-void Map::destruct() {
-}
+void Map::render_row(SDL_Surface *surface, uint16_t y, int clipMinX,
+                     int clipMaxX, int clipMinY, int clipMaxY) {
+  const int rowTop = (int)y;
+  const int rowBot = rowTop + kSandTile;
+  if (rowBot <= clipMinY || rowTop >= clipMaxY)
+    return;
 
-void Map::render(SDL_Surface* surface) {
-    std::array<std::future<void>, (size_t)ceil(WINDOW_HEIGHT / SAND_TILE_SIZE)> futures;
-
-    int i = 0;
-    for(uint16_t y = WINDOW_HEIGHT; y > floor(beachRatio * WINDOW_HEIGHT); y -= SAND_TILE_SIZE) {
-        futures[i] = std::async(&Map::render_row, this, surface, y);
-    }
-
-    for(int i = 0; i < futures.size(); i++) {
-        if(futures[i].valid()) futures[i].get();
-    }
-}
-
-void Map::render_row(SDL_Surface* surface, uint16_t y) {
-    for(uint16_t x = 0; x < WINDOW_WIDTH; x += SAND_TILE_SIZE) {
-        sandTex.draw(surface,
-             {x, y, SAND_TILE_SIZE, SAND_TILE_SIZE}, {255, 255, 255, 255});
-    }
-
+  const int align = kSandTile;
+  int x = std::max(0, (clipMinX / align) * align);
+  for (; x < WINDOW_WIDTH; x += align) {
+    if (x + align <= clipMinX)
+      continue;
+    if (x >= clipMaxX)
+      break;
+    sandTex.draw(surface,
+                 {(uint16_t)x, y, static_cast<uint16_t>(kSandTile),
+                  static_cast<uint16_t>(kSandTile)},
+                 {255, 255, 255, 255});
+  }
 }
 
 bool Map::onBeach(float x, float y) {
-    return y > (1 - beachRatio) * WINDOW_HEIGHT;
+  (void)x;
+  const float sandTop = beachRatio * (float)WINDOW_HEIGHT;
+  return y > sandTop;
+}
+
+float Map::oceanMaxY() const {
+  return beachRatio * (float)WINDOW_HEIGHT;
 }

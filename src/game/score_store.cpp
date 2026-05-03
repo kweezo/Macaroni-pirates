@@ -5,7 +5,40 @@
 #include <cstdlib>
 #include <cstring>
 
+namespace {
+
+struct DemoRow {
+  const char *name;
+  int score;
+};
+
+const DemoRow kAchievableDemo[] = {
+    {"Deckhand Dan", 55},
+    {"Parrot", 120},
+    {"Stowaway", 195},
+    {"Old Salt", 280},
+    {"Mackerel Pete", 380},
+};
+
+}
+
 ScoreStore::ScoreStore() = default;
+
+void ScoreStore::seedAchievableDummyLocked() {
+  const size_t n =
+      std::min(sizeof kAchievableDemo / sizeof kAchievableDemo[0],
+               (size_t)SCORE_STORE_MAX_SCORES);
+  entryCount = n;
+  for (size_t i = 0; i < n; ++i) {
+    entries[i] = {};
+    std::strncpy(entries[i].name, kAchievableDemo[i].name,
+                 sizeof entries[i].name - 1);
+    entries[i].name[sizeof entries[i].name - 1] = '\0';
+    entries[i].score = kAchievableDemo[i].score;
+  }
+  sortEntries();
+  saveToFile();
+}
 
 void ScoreStore::reloadFromFile() {
   std::lock_guard lock(storeMutex);
@@ -13,8 +46,10 @@ void ScoreStore::reloadFromFile() {
   entries = {};
 
   FILE *f = fopen(filePath, "r");
-  if (!f)
+  if (!f) {
+    seedAchievableDummyLocked();
     return;
+  }
 
   char line[256];
   while (entryCount < SCORE_STORE_MAX_SCORES &&
@@ -31,6 +66,9 @@ void ScoreStore::reloadFromFile() {
   }
   fclose(f);
   sortEntries();
+
+  if (entryCount == 0)
+    seedAchievableDummyLocked();
 }
 
 void ScoreStore::sortEntries() {

@@ -17,12 +17,19 @@
 #define BASE_CANNONBALL_SPEED 1000
 #define PLAYER_WIDTH 150
 #define PLAYER_HEIGHT 100
+#define PLAYER_MAX_HEALTH 100
+#define PLAYER_DAMAGE_SHOOT_DEPOSITING_TRASH 18
 
-class Player : public Process, Drawable {
+class Player : public Process, public Drawable {
 public:
   Player();
   float centerX() const;
   float centerY() const;
+
+  void prepareForNewRound();
+  void placeRandomTopSpawn();
+  void takeDamage(int amount);
+  int health() const;
 
 private:
   void init() override;
@@ -46,6 +53,10 @@ private:
 
   float dt;
   size_t lastTime;
+
+  bool drawLinkedToMap = false;
+
+  int healthPoints = PLAYER_MAX_HEALTH;
 
   std::array<Cannonball, MAX_CANNONBALL_COUNT> cannonballs;
 };

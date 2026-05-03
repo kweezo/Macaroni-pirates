@@ -14,5 +14,6 @@ public:
 
 private:
   UIButton quitButton{};
+  UIButton gameOverMenuButton{};
   PauseMenu pauseMenu{};
 };
