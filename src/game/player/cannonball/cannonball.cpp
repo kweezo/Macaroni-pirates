@@ -31,3 +31,13 @@ void Cannonball::draw(SDL_Surface* surface) {
 bool Cannonball::isActive() {
     return active;
 }
+
+void Cannonball::collisionRect(float &outX, float &outY, float &outW,
+                               float &outH) const {
+  outX = x;
+  outY = y;
+  outW = (float)cannonballTexWidth;
+  outH = (float)cannonballTexHeight;
+}
+
+void Cannonball::deactivate() { active = false; }

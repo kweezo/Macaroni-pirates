@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 project(MACARONI) 
 set(CMAKE_CXX_STANDARD 23)
 
 
-file(GLOB_RECURSE sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE sources CONFIGURE_DEPENDS
+     ${PROJECT_SOURCE_DIR}/src/*.cpp)
 add_executable(mac ${sources})
 
 target_include_directories(mac PUBLIC ${PROJECT_SOURCE_DIR}/src)

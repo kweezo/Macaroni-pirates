@@ -2,32 +2,34 @@
 
 #include <SDL3/SDL.h>
 
-#include <mutex>
 #include <array>
+#include <mutex>
+#include <stdexcept>
 
 #define MAX_DRAWABLE_DEPENDENCY_COUNT 8
 
 class Drawable {
-    public:
-        Drawable();
-        ~Drawable();
+public:
+  Drawable();
+  ~Drawable();
 
-        void renderWrapper(SDL_Surface* surface);
-        void resetMutex();
-        std::mutex* getMutex();
+  void renderWrapper(SDL_Surface *surface);
+  void resetMutex();
+  std::mutex *getMutex();
 
-        void addDependency(Drawable* drawable);
-        void removeDependency(Drawable* drawable);
+  void addDependency(Drawable *drawable);
+  void removeDependency(Drawable *drawable);
 
-    protected:
-        virtual void render(SDL_Surface* surface) {}
-    private:
-        void addDependee(Drawable* drawable);
-        void removeDependee(Drawable* drawable);
+protected:
+  virtual void render(SDL_Surface *surface) {}
 
-        std::mutex mutex;
-        uint32_t drawIndex;
+private:
+  void addDependee(Drawable *drawable);
+  void removeDependee(Drawable *drawable);
 
-        std::array<Drawable*, MAX_DRAWABLE_DEPENDENCY_COUNT> dependencies;
-        std::array<Drawable*, MAX_DRAWABLE_DEPENDENCY_COUNT> dependees;
+  std::mutex mutex;
+  uint32_t drawIndex;
+
+  std::array<Drawable *, MAX_DRAWABLE_DEPENDENCY_COUNT> dependencies;
+  std::array<Drawable *, MAX_DRAWABLE_DEPENDENCY_COUNT> dependees;
 };

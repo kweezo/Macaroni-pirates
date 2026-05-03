@@ -27,6 +27,8 @@ class EnemyManager: public Process, Drawable {
 
     public:
         EnemyManager();
+        bool hitEnemyByRect(float x, float y, float w, float h, int maxHits);
+        void hitTrashByRect(float x, float y, float w, float h);
     private:
         void init() override;
         void run() override;

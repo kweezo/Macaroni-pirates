@@ -4,6 +4,7 @@
 #include "enemy_inv_tex"
 
 #include "manager/game_state.hpp"
+#include "math/aabb.hpp"
 
 EnemyManager::EnemyManager(): Process(5000) {
 
@@ -79,6 +80,25 @@ void EnemyManager::updateInstance(Instance& instance) {
 
 
 }
+
+bool EnemyManager::hitEnemyByRect(float x, float y, float w, float h,
+                                  int maxHits) {
+  int left = maxHits;
+  bool any = false;
+  for (Instance &instance : instances) {
+    if (!instance.active || left <= 0)
+      continue;
+    if (rectsOverlap(x, y, w, h, instance.x, instance.y, (float)ENEMY_SIZE,
+                     (float)ENEMY_SIZE)) {
+      instance.active = false;
+      any = true;
+      --left;
+    }
+  }
+  return any;
+}
+
+void EnemyManager::hitTrashByRect(float, float, float, float) {}
 
 void EnemyManager::spawnInstances(size_t count) {
     assert(count <= MAX_ENEMY_COUNT);

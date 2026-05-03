@@ -13,6 +13,8 @@ class Cannonball {
         void draw(SDL_Surface* surface);
 
         bool isActive();
+        void collisionRect(float& outX, float& outY, float& outW, float& outH) const;
+        void deactivate();
     private:
         void movement(float dt);
         void boundsCheck();
