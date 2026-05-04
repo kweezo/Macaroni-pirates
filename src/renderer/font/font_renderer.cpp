@@ -8,17 +8,15 @@
 
 #include <cstring>
 
-namespace {
-
 constexpr int GRID_COLS = 16;
 constexpr int GRID_ROWS = 8;
 
-Texture &fontAtlasTex() {
+static Texture &fontAtlasTex() {
   static Texture atlas(fontTexDat, fontTexWidth, fontTexHeight);
   return atlas;
 }
 
-int glyphIndex(unsigned char c) {
+static int glyphIndex(unsigned char c) {
   const int cellCount = GRID_COLS * GRID_ROWS;
   const int i = (int)c;
   if (i >= cellCount)
@@ -26,24 +24,14 @@ int glyphIndex(unsigned char c) {
   return i;
 }
 
-void maskedBlit(SDL_Surface *surf, int dstW, int dstH, const Texture &srcTex,
+static void maskedBlit(SDL_Surface *surf, int dstW, int dstH, const Texture &srcTex,
                 int sx, int sy, int sw, int sh, float dx, float dy, float dW,
                 float dH, uint8_t r, uint8_t g, uint8_t b) {
   if (!surf || !surf->pixels || dW <= 0.0f || dH <= 0.0f || sw <= 0 || sh <= 0)
     return;
 
-  const SDL_PixelFormatDetails *fmt = SDL_GetPixelFormatDetails(surf->format);
-  if (!fmt)
-    return;
-
-  const int dstBpp = (int)fmt->bytes_per_pixel;
-  if (dstBpp < 1 || dstBpp > 4)
-    return;
-
   const uint8_t *src = srcTex.bytes();
   const int srcPitch = srcTex.rowPitch();
-  const int dstPitch = surf->pitch;
-  uint8_t *dstBase = (uint8_t *)surf->pixels;
 
   const int idW = (int)ceilf(dW);
   const int idH = (int)ceilf(dH);
@@ -77,18 +65,12 @@ void maskedBlit(SDL_Surface *surf, int dstW, int dstH, const Texture &srcTex,
       const uint8_t dg = (uint8_t)((uint16_t)sp[1] * (uint16_t)g / 255);
       const uint8_t db = (uint8_t)((uint16_t)sp[2] * (uint16_t)b / 255);
 
-      if (dstBpp == 4) {
-        const uint32_t pix = SDL_MapRGBA(fmt, nullptr, dr, dg, db, sp[3]);
-        uint8_t *dp = dstBase + (size_t)py * (size_t)dstPitch + (size_t)px * 4u;
-        memcpy(dp, &pix, 4u);
-      } else {
-        SDL_WriteSurfacePixel(surf, px, py, dr, dg, db, sp[3]);
-      }
+      SDL_WriteSurfacePixel(surf, px, py, dr, dg, db, sp[3]);
     }
   }
 }
 
-void drawFontGlyph(SDL_Surface *surf, int dstW, int dstH, const Texture &atlas,
+static void drawFontGlyph(SDL_Surface *surf, int dstW, int dstH, const Texture &atlas,
                    int cellW, int cellH, unsigned char ch, float dx, float dy,
                    float dW, float dH, uint8_t r, uint8_t g, uint8_t b) {
   const int gi = glyphIndex(ch);
@@ -98,7 +80,6 @@ void drawFontGlyph(SDL_Surface *surf, int dstW, int dstH, const Texture &atlas,
   const int sy = row * cellH;
   maskedBlit(surf, dstW, dstH, atlas, sx, sy, cellW, cellH, dx, dy, dW, dH, r,
              g, b);
-}
 }
 
 void FontRenderer::drawText(SDL_Surface *surface, float x, float y, float scale,

@@ -19,7 +19,7 @@ int main() {
 
     gameState.start(pick == MainMenuResult::ReplayLast);
 
-    while (gameState.gameRunning.load(std::memory_order_relaxed)) {
+    while (gameState.gameRunning) {
       gameState.renderer.frame();
     }
 

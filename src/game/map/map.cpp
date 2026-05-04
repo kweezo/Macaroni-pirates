@@ -10,13 +10,9 @@
 #include <cmath>
 #include <future>
 
-namespace {
-
 constexpr int kSandTile = 32;
 constexpr size_t kSandRowFutures =
     (WINDOW_HEIGHT + kSandTile - 1) / kSandTile;
-
-}
 
 Map::Map() = default;
 

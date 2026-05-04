@@ -1,26 +1,37 @@
 #include "game/score_store.hpp"
 
 #include <algorithm>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <string>
 
-namespace {
+static void copyAsciiName(char *dest, size_t destCap, const char *src) {
+  dest[0] = '\0';
+  if (!src || destCap == 0)
+    return;
+  size_t w = 0;
+  for (size_t i = 0; src[i] && w + 1 < destCap; ++i) {
+    const unsigned char c = (unsigned char)src[i];
+    if (c < 32 || c > 126)
+      continue;
+    dest[w++] = (char)c;
+  }
+  dest[w] = '\0';
+}
 
 struct DemoRow {
   const char *name;
   int score;
 };
 
-const DemoRow kAchievableDemo[] = {
+static const DemoRow kAchievableDemo[] = {
     {"Deckhand Dan", 55},
     {"Parrot", 120},
     {"Stowaway", 195},
     {"Old Salt", 280},
     {"Mackerel Pete", 380},
 };
-
-}
 
 ScoreStore::ScoreStore() = default;
 
@@ -45,26 +56,27 @@ void ScoreStore::reloadFromFile() {
   entryCount = 0;
   entries = {};
 
-  FILE *f = fopen(filePath, "r");
-  if (!f) {
+  std::ifstream in(filePath);
+  if (!in) {
     seedAchievableDummyLocked();
     return;
   }
 
-  char line[256];
+  std::string line;
   while (entryCount < SCORE_STORE_MAX_SCORES &&
-         std::fgets(line, sizeof line, f)) {
-    char *sep = std::strchr(line, '|');
-    if (!sep)
+         std::getline(in, line)) {
+    const size_t sepPos = line.find('|');
+    if (sepPos == std::string::npos)
       continue;
-    *sep = '\0';
-    int sc = std::atoi(sep + 1);
-    std::strncpy(entries[entryCount].name, line, sizeof entries[entryCount].name - 1);
-    entries[entryCount].name[sizeof entries[entryCount].name - 1] = '\0';
+    line[sepPos] = '\0';
+    const int sc = std::atoi(line.c_str() + sepPos + 1);
+    copyAsciiName(entries[entryCount].name, sizeof entries[entryCount].name,
+                  line.c_str());
+    if (!entries[entryCount].name[0])
+      continue;
     entries[entryCount].score = sc;
     ++entryCount;
   }
-  fclose(f);
   sortEntries();
 
   if (entryCount == 0)
@@ -77,21 +89,22 @@ void ScoreStore::sortEntries() {
 }
 
 void ScoreStore::saveToFile() {
-  FILE *f = fopen(filePath, "w");
-  if (!f)
+  std::ofstream out(filePath);
+  if (!out)
     return;
   for (size_t i = 0; i < entryCount; ++i) {
-    std::fprintf(f, "%s|%d\n", entries[i].name, entries[i].score);
+    out << entries[i].name << '|' << entries[i].score << '\n';
   }
-  fclose(f);
 }
 
-void ScoreStore::addEntry(const char *nameUtf8, int score) {
-  if (!nameUtf8 || !nameUtf8[0])
+void ScoreStore::addEntry(const char *nameAscii, int score) {
+  if (!nameAscii || !nameAscii[0])
     return;
   std::lock_guard lock(storeMutex);
   Entry newEntry{};
-  std::strncpy(newEntry.name, nameUtf8, sizeof newEntry.name - 1);
+  copyAsciiName(newEntry.name, sizeof newEntry.name, nameAscii);
+  if (!newEntry.name[0])
+    return;
   newEntry.score = score;
 
   if (entryCount < SCORE_STORE_MAX_SCORES) {

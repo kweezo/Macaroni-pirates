@@ -10,9 +10,7 @@
 #include "manager/game_state.hpp"
 #include "math/aabb.hpp"
 
-#include <atomic>
 #include <cmath>
-#include <mutex>
 
 EnemyManager::EnemyManager() : Process(5000) {}
 
@@ -27,15 +25,10 @@ void EnemyManager::init() {
     drawLinkedToMap = true;
   }
 
-  {
-    std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
-    spawnStageWave();
-  }
+  spawnStageWave();
 }
 
 void EnemyManager::run() {
-  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
-
   if (gameState.isGameOver())
     return;
 
@@ -106,7 +99,7 @@ void EnemyManager::updateInstance(Instance &instance) {
 
   if (depositing(instance)) {
     instance.invulnerable = true;
-    if (!gameState.paused.load(std::memory_order_relaxed)) {
+    if (!gameState.paused) {
       if (instance.lastTrashSpawnNano == 0) {
         spawnFloatingTrash(instance);
         instance.lastTrashSpawnNano = 1;
@@ -192,7 +185,6 @@ void EnemyManager::tryAdvanceEnemyWaveLocked() {
 
 bool EnemyManager::cannonballOverlapsDepositingEnemy(float x, float y, float w,
                                                      float h) {
-  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
   const float ew = (float)ENEMY_SIZE;
   const float eh = (float)ENEMY_SIZE;
   for (Instance &instance : instances) {
@@ -206,7 +198,6 @@ bool EnemyManager::cannonballOverlapsDepositingEnemy(float x, float y, float w,
 
 int EnemyManager::hitEnemyByRect(float x, float y, float w, float h,
                                  int maxHits) {
-  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
   int left = maxHits;
   int hits = 0;
   for (Instance &instance : instances) {
@@ -223,7 +214,6 @@ int EnemyManager::hitEnemyByRect(float x, float y, float w, float h,
 }
 
 void EnemyManager::hitTrashByRect(float px, float py, float pw, float ph) {
-  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
   const float tw = (float)TRASH_FLOAT_DIM;
   const float th = (float)TRASH_FLOAT_DIM;
   for (TrashPiece &tp : floatingTrash) {
@@ -232,14 +222,12 @@ void EnemyManager::hitTrashByRect(float px, float py, float pw, float ph) {
     if (!rectsOverlap(px, py, pw, ph, tp.x, tp.y, tw, th))
       continue;
     tp.active = false;
-    gameState.score.fetch_add(SCORE_POINTS_TRASH_COLLECT,
-                              std::memory_order_relaxed);
+    gameState.score += SCORE_POINTS_TRASH_COLLECT;
   }
 }
 
 void EnemyManager::applyPlayerEnemyScorePenalty(float px, float py, float pw,
                                                 float ph) {
-  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
   const uint64_t now = static_cast<uint64_t>(NANOS);
   if (now - lastPlayerEnemyScorePenaltyNs <
       PLAYER_ENEMY_SCORE_PENALTY_COOLDOWN_NS)
@@ -259,7 +247,6 @@ void EnemyManager::applyPlayerEnemyScorePenalty(float px, float py, float pw,
 
 bool EnemyManager::cannonballDissolvesTrash(float x, float y, float w,
                                             float h) {
-  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
   const float tw = (float)TRASH_FLOAT_DIM;
   const float th = (float)TRASH_FLOAT_DIM;
   for (TrashPiece &tp : floatingTrash) {
@@ -324,7 +311,7 @@ void EnemyManager::clearFloatingTrash() {
 void EnemyManager::simulateFloatingTrash() {
   if (gameState.replay.isReplayActive())
     return;
-  if (gameState.paused.load(std::memory_order_relaxed))
+  if (gameState.paused)
     return;
   constexpr float kMargin = 72.f;
   for (TrashPiece &tp : floatingTrash) {

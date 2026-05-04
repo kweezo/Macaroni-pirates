@@ -42,7 +42,7 @@ void GameUi::draw(SDL_Surface *surface, GameState &gs) {
         title, 255, 210, 180, (float)surface->w - 48.0f);
 
     char stats[144];
-    const int sc = gs.score.load(std::memory_order_relaxed);
+    const int sc = gs.score;
     std::snprintf(stats, sizeof stats, "Score %d stage %d/%d. Main menu.", sc,
                   gs.stageNumberOneBased(), GameState::kEnemyStageCount);
     FontRenderer::drawText(surface, 72.0f, 296.0f, 0.30f, stats, 200, 210, 228,
@@ -52,13 +52,13 @@ void GameUi::draw(SDL_Surface *surface, GameState &gs) {
     return;
   }
 
-  if (gs.paused.load(std::memory_order_relaxed)) {
+  if (gs.paused) {
     pauseMenu.draw(surface, gs);
     return;
   }
 
   char line[128];
-  const int sc = gs.score.load(std::memory_order_relaxed);
+  const int sc = gs.score;
   const int st = gs.stageNumberOneBased();
   const int hp = gs.player.health();
   constexpr float hudQuitReserve = 160.0f + 16.0f + 32.0f;
@@ -89,7 +89,7 @@ void GameUi::handleClick(float mx, float my, GameState &gs) {
     return;
   }
 
-  if (gs.paused.load(std::memory_order_relaxed)) {
+  if (gs.paused) {
     pauseMenu.handleClick(mx, my, gs);
     return;
   }

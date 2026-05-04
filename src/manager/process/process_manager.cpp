@@ -1,6 +1,6 @@
 #include "process_manager.hpp"
 
-ProcessManager::ProcessManager() : shouldRun(false) {}
+ProcessManager::ProcessManager() = default;
 
 void ProcessManager::addProcess(Process &process) {
   workers.push_back(std::async(std::launch::async, &Process::asyncTask,

@@ -1,9 +1,7 @@
 #pragma once
 
-#include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <mutex>
 
 #include "game/ally/ally.hpp"
 #include "game/enemy/enemy.hpp"
@@ -50,12 +48,10 @@ struct GameState {
 
   static constexpr int VISION_RADIUS = 220;
 
-  std::atomic<int> score{};
-  std::atomic<bool> paused{false};
-  std::atomic<bool> gameOver{false};
-  std::atomic<bool> gameRunning{false};
-
-  std::recursive_mutex worldSimMutex;
+  int score = 0;
+  bool paused = false;
+  bool gameOver = false;
+  bool gameRunning = false;
 
   void reloadScoresFromDisk();
   void shutdownFromUser();

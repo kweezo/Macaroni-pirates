@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <atomic>
 #include <iostream>
 
 class Process {
@@ -12,7 +11,7 @@ class Process {
         virtual void run() {};
         virtual void destruct() {};
 
-        void asyncTask(const std::atomic_bool& shouldRun);
+        void asyncTask(const bool &shouldRun);
     public:
         std::string getName();
 

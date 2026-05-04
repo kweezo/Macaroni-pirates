@@ -2,8 +2,6 @@
 
 #include "math/aabb.hpp"
 
-namespace {
-
 constexpr uint64_t kEnemyStageDurationNs = 60ULL * NS;
 
 static StageEnemyWave kEnemyStages[GameState::kEnemyStageCount] = {
@@ -11,8 +9,6 @@ static StageEnemyWave kEnemyStages[GameState::kEnemyStageCount] = {
     {0.42f, 12, 1.10f},
     {0.34f, 14, 1.22f},
 };
-
-}
 
 GameState gameState = GameState();
 
@@ -22,18 +18,19 @@ void GameState::reloadScoresFromDisk() { scoreStore.reloadFromFile(); }
 
 void GameState::shutdownFromUser() {
   replay.flushRecording();
-  gameRunning.store(false, std::memory_order_relaxed);
+  gameRunning = false;
   processManager.stop();
 }
 
 bool GameState::isGameOver() const {
-  return gameOver.load(std::memory_order_relaxed);
+  return gameOver;
 }
 
 void GameState::triggerGameOver() {
-  if (gameOver.exchange(true, std::memory_order_relaxed))
+  if (gameOver)
     return;
-  paused.store(true, std::memory_order_relaxed);
+  gameOver = true;
+  paused = true;
 }
 
 void GameState::restartEnemyStageClock() {
@@ -62,11 +59,11 @@ int GameState::enemyStageSecondsRemainingForHud() const {
 }
 
 void GameState::start(bool replayFromMenu) {
-  paused.store(false, std::memory_order_relaxed);
-  gameOver.store(false, std::memory_order_relaxed);
-  gameRunning.store(true, std::memory_order_relaxed);
+  paused = false;
+  gameOver = false;
+  gameRunning = true;
   replay.beginRound(replayFromMenu);
-  score.store(0);
+  score = 0;
   enemyWaveIndex = 0;
   map.setBeachRatio(enemyWaveConfig().beachRatio);
   player.prepareForNewRound();
@@ -106,12 +103,7 @@ int GameState::stageNumberOneBased() const {
 void GameState::subtractScoreBounded(int amount) {
   if (amount <= 0)
     return;
-  int expected = score.load(std::memory_order_relaxed);
-  for (;;) {
-    const int desired = expected > amount ? expected - amount : 0;
-    if (score.compare_exchange_weak(expected, desired, std::memory_order_relaxed))
-      return;
-  }
+  score = score > amount ? score - amount : 0;
 }
 
 void GameState::onEnemyWaveCleared() {

@@ -1,75 +1,11 @@
 #include "renderer.hpp"
 
+#include "renderer/circle_mask_lookup.hpp"
+
 #include "macros.hpp"
 #include "manager/game_state.hpp"
 
-#define CIRCLE_MASK_RADIUS GameState::VISION_RADIUS
-
-namespace {
-consteval size_t circlePixelCount() {
-  size_t count = 0;
-  for (int dy = -CIRCLE_MASK_RADIUS; dy <= CIRCLE_MASK_RADIUS; ++dy) {
-    for (int dx = -CIRCLE_MASK_RADIUS; dx <= CIRCLE_MASK_RADIUS; ++dx) {
-      if (dx * dx + dy * dy <= CIRCLE_MASK_RADIUS * CIRCLE_MASK_RADIUS) {
-        ++count;
-      }
-    }
-  }
-  return count;
-}
-
-template <size_t Count>
-consteval std::array<SDL_Point, Count> buildCircleOffsets() {
-  std::array<SDL_Point, Count> offsets = {};
-  size_t writeIndex = 0;
-  for (int dy = -CIRCLE_MASK_RADIUS; dy <= CIRCLE_MASK_RADIUS; ++dy) {
-    for (int dx = -CIRCLE_MASK_RADIUS; dx <= CIRCLE_MASK_RADIUS; ++dx) {
-      if (dx * dx + dy * dy <= CIRCLE_MASK_RADIUS * CIRCLE_MASK_RADIUS) {
-        offsets[writeIndex++] = SDL_Point{dx, dy};
-      }
-    }
-  }
-  return offsets;
-}
-
-template <size_t Count>
-consteval std::array<int16_t, 2 * CIRCLE_MASK_RADIUS + 1>
-buildMinXPerRow(const std::array<SDL_Point, Count> &offsets) {
-  std::array<int16_t, 2 * CIRCLE_MASK_RADIUS + 1> minX = {};
-  for (int i = 0; i < 2 * CIRCLE_MASK_RADIUS + 1; ++i) {
-    minX[i] = CIRCLE_MASK_RADIUS;
-  }
-  for (size_t i = 0; i < Count; ++i) {
-    const int row = offsets[i].y + CIRCLE_MASK_RADIUS;
-    minX[row] = std::min<int16_t>(minX[row], (int16_t)offsets[i].x);
-  }
-  return minX;
-}
-
-template <size_t Count>
-consteval std::array<int16_t, 2 * CIRCLE_MASK_RADIUS + 1>
-buildMaxXPerRow(const std::array<SDL_Point, Count> &offsets) {
-  std::array<int16_t, 2 * CIRCLE_MASK_RADIUS + 1> maxX = {};
-  for (int i = 0; i < 2 * CIRCLE_MASK_RADIUS + 1; ++i) {
-    maxX[i] = -CIRCLE_MASK_RADIUS;
-  }
-  for (size_t i = 0; i < Count; ++i) {
-    const int row = offsets[i].y + CIRCLE_MASK_RADIUS;
-    maxX[row] = std::max<int16_t>(maxX[row], (int16_t)offsets[i].x);
-  }
-  return maxX;
-}
-
-struct CircleLookup {
-  static constexpr size_t PixelCount = circlePixelCount();
-  static constexpr std::array<SDL_Point, PixelCount> Offsets =
-      buildCircleOffsets<PixelCount>();
-  static constexpr std::array<int16_t, 2 * CIRCLE_MASK_RADIUS + 1> MinXPerRow =
-      buildMinXPerRow<PixelCount>(Offsets);
-  static constexpr std::array<int16_t, 2 * CIRCLE_MASK_RADIUS + 1> MaxXPerRow =
-      buildMaxXPerRow<PixelCount>(Offsets);
-};
-}
+using VisionCircleMask = CircleMaskLookup<GameState::VISION_RADIUS>;
 
 Renderer::Renderer() {}
 
@@ -102,8 +38,8 @@ void Renderer::frame() {
     } else if (e.type == SDL_EVENT_KEY_DOWN && e.key.down && !e.key.repeat &&
                e.key.key == SDLK_ESCAPE) {
       if (!gameState.isGameOver()) {
-        const bool p = gameState.paused.load(std::memory_order_relaxed);
-        gameState.paused.store(!p, std::memory_order_relaxed);
+        const bool p = gameState.paused;
+        gameState.paused = !p;
       }
     } else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.down &&
                e.button.button == SDL_BUTTON_LEFT) {
@@ -121,10 +57,11 @@ void Renderer::frame() {
 
   const int centerX = (int)std::floor(gameState.visionCenterX());
   const int centerY = (int)std::floor(gameState.visionCenterY());
-  const int rectLeft = std::max(0, centerX - CIRCLE_MASK_RADIUS);
-  const int rectTop = std::max(0, centerY - CIRCLE_MASK_RADIUS);
-  const int rectRight = std::min(surf->w, centerX + CIRCLE_MASK_RADIUS);
-  const int rectBottom = std::min(surf->h, centerY + CIRCLE_MASK_RADIUS);
+  constexpr int vr = GameState::VISION_RADIUS;
+  const int rectLeft = std::max(0, centerX - vr);
+  const int rectTop = std::max(0, centerY - vr);
+  const int rectRight = std::min(surf->w, centerX + vr);
+  const int rectBottom = std::min(surf->h, centerY + vr);
   for (int y = rectTop; y < rectBottom; ++y) {
     uint32_t *row =
         (uint32_t *)((uint8_t *)surf->pixels + y * surf->pitch);
@@ -185,9 +122,9 @@ void Renderer::render() {
 }
 
 void Renderer::applyInvertedCircleMask(SDL_Surface *surface) {
-  constexpr int radius = CIRCLE_MASK_RADIUS;
-  constexpr auto minXPerRow = CircleLookup::MinXPerRow;
-  constexpr auto maxXPerRow = CircleLookup::MaxXPerRow;
+  constexpr int radius = GameState::VISION_RADIUS;
+  constexpr auto minXPerRow = VisionCircleMask::MinXPerRow;
+  constexpr auto maxXPerRow = VisionCircleMask::MaxXPerRow;
   const int centerX = (int)std::floor(gameState.visionCenterX());
   const int centerY = (int)std::floor(gameState.visionCenterY());
   const SDL_PixelFormatDetails *formatDetails =

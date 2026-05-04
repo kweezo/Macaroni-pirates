@@ -3,17 +3,15 @@
 #include "manager/game_state.hpp"
 #include "macros.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
-#include <mutex>
 
 #include "player_alt_tex"
 #include "player_tex"
 
-namespace {
 constexpr float PLAYER_ALT_DRAW_SCALE = 0.68f;
 constexpr float PLAYER_TOP_SPAWN_Y = 24.0f;
-}
 
 Player::Player() : tex(), texAlt(), x(), y(), Process(1000), lastShotPress() {}
 
@@ -24,7 +22,6 @@ float Player::centerY() const { return y + PLAYER_HEIGHT / 2.0f; }
 void Player::prepareForNewRound() { healthPoints = PLAYER_MAX_HEALTH; }
 
 void Player::placeRandomTopSpawn() {
-  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
   y = PLAYER_TOP_SPAWN_Y;
   const int span =
       WINDOW_WIDTH > PLAYER_WIDTH ? WINDOW_WIDTH - PLAYER_WIDTH : 1;
@@ -61,7 +58,7 @@ void Player::run() {
     return;
   }
 
-  if (gameState.paused.load(std::memory_order_relaxed)) {
+  if (gameState.paused) {
     lastTime = NANOS;
     return;
   }
@@ -87,26 +84,26 @@ void Player::run() {
                                        gameState.replay.recordingTimeOrigin(),
                                    x, y);
 
-  {
-    std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
-    gameState.enemyManager.hitTrashByRect(x, y, (float)PLAYER_WIDTH,
-                                          (float)PLAYER_HEIGHT);
-    gameState.enemyManager.applyPlayerEnemyScorePenalty(
-        x, y, (float)PLAYER_WIDTH, (float)PLAYER_HEIGHT);
-  }
-
   shooting();
 
-  int i = 0;
+  gameState.enemyManager.hitTrashByRect(x, y, (float)PLAYER_WIDTH,
+                                        (float)PLAYER_HEIGHT);
+  gameState.enemyManager.applyPlayerEnemyScorePenalty(
+      x, y, (float)PLAYER_WIDTH, (float)PLAYER_HEIGHT);
+
   for (Cannonball &cannonball : cannonballs) {
     if (!cannonball.isActive())
       continue;
 
-    cannonball.update(dt);
     float hitX = 0.0f;
     float hitY = 0.0f;
     float hitW = 0.0f;
     float hitH = 0.0f;
+    cannonball.collisionRect(hitX, hitY, hitW, hitH);
+    const float prevTop = hitY;
+
+    cannonball.update(dt);
+
     cannonball.collisionRect(hitX, hitY, hitW, hitH);
 
     if (!gameState.isRectInVisionBox(hitX, hitY, hitW, hitH)) {
@@ -114,35 +111,40 @@ void Player::run() {
       continue;
     }
 
+    const float sweepTop = std::min(prevTop, hitY);
+    const float sweepBottom = std::max(prevTop + hitH, hitY + hitH);
+    const float sweepH = sweepBottom - sweepTop;
+
     const int kills =
-        gameState.enemyManager.hitEnemyByRect(hitX, hitY, hitW, hitH, 1);
+        gameState.enemyManager.hitEnemyByRect(hitX, sweepTop, hitW, sweepH, 1);
     if (kills > 0) {
-      gameState.score.fetch_add(kills * SCORE_POINTS_ENEMY_KILL,
-                                std::memory_order_relaxed);
+      gameState.score += kills * SCORE_POINTS_ENEMY_KILL;
       cannonball.deactivate();
       continue;
     }
-    if (gameState.enemyManager.cannonballDissolvesTrash(hitX, hitY, hitW,
-                                                        hitH)) {
+    if (gameState.enemyManager.cannonballDissolvesTrash(hitX, sweepTop, hitW,
+                                                        sweepH)) {
       cannonball.deactivate();
       continue;
     }
     if (gameState.enemyManager.cannonballOverlapsDepositingEnemy(
-            hitX, hitY, hitW, hitH)) {
+            hitX, sweepTop, hitW, sweepH)) {
       takeDamage(PLAYER_DAMAGE_SHOOT_DEPOSITING_TRASH);
       cannonball.deactivate();
       continue;
     }
-    if (gameState.allyManager.onCannonballHit(hitX, hitY, hitW, hitH)) {
+    if (gameState.allyManager.onCannonballHit(hitX, sweepTop, hitW, sweepH)) {
       gameState.subtractScoreBounded(SCORE_PENALTY_ALLY_HIT);
       cannonball.deactivate();
       continue;
     }
-    i++;
   }
 }
 
 void Player::movement() {
+  if (gameState.replay.isReplayActive())
+    return;
+
   float dx = 0, dy = 0;
 
   const bool *keyStates = SDL_GetKeyboardState(nullptr);
@@ -167,11 +169,8 @@ void Player::movement() {
   dx *= speed / scalar;
   dy *= speed / scalar;
 
-  {
-    std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
-    x += dx * dt;
-    y += dy * dt;
-  }
+  x += dx * dt;
+  y += dy * dt;
 }
 
 void Player::shooting() {

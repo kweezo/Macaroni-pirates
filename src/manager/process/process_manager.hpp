@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include <future>
 #include <vector>
 
@@ -16,6 +15,6 @@ public:
   void joinWorkers();
 
 private:
-  std::atomic_bool shouldRun;
+  bool shouldRun = false;
   std::vector<std::future<void>> workers;
 };

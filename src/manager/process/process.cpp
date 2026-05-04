@@ -9,7 +9,7 @@ Process::Process() : minSleepNS(0), lastRun(0) {}
 
 Process::Process(uint32_t minSleepNS) : minSleepNS(minSleepNS), lastRun(0) {}
 
-void Process::asyncTask(const std::atomic_bool &shouldRun) {
+void Process::asyncTask(const bool &shouldRun) {
   try {
     init();
     while (shouldRun) {

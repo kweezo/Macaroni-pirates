@@ -8,22 +8,18 @@
 #include <cmath>
 #include <cstring>
 
-namespace {
-
-void copyAsciiPrintable(char *dest, size_t destCap, const char *utf8) {
+static void copyAsciiPrintable(char *dest, size_t destCap, const char *ascii) {
   dest[0] = '\0';
-  if (!utf8 || !utf8[0] || destCap == 0)
+  if (!ascii || !ascii[0] || destCap == 0)
     return;
   size_t w = 0;
-  for (size_t i = 0; utf8[i] && w + 1 < destCap; ++i) {
-    const unsigned char c = (unsigned char)utf8[i];
+  for (size_t i = 0; ascii[i] && w + 1 < destCap; ++i) {
+    const unsigned char c = (unsigned char)ascii[i];
     if (c < 32 || c > 126)
       continue;
     dest[w++] = (char)c;
   }
   dest[w] = '\0';
-}
-
 }
 
 void UITextField::setRect(float ax, float ay, float aw, float ah) {
@@ -35,12 +31,12 @@ void UITextField::setRect(float ax, float ay, float aw, float ah) {
 
 void UITextField::setWindow(SDL_Window *window) { sdlWindow = window; }
 
-void UITextField::setText(const char *utf8) {
-  copyAsciiPrintable(textChars, MaxChars + 1, utf8);
+void UITextField::setText(const char *ascii) {
+  copyAsciiPrintable(textChars, MaxChars + 1, ascii);
 }
 
-void UITextField::setPlaceholder(const char *utf8) {
-  copyAsciiPrintable(placeholderChars, MaxChars + 1, utf8);
+void UITextField::setPlaceholder(const char *ascii) {
+  copyAsciiPrintable(placeholderChars, MaxChars + 1, ascii);
 }
 
 bool UITextField::hitTest(float px, float py) const {

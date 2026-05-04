@@ -18,7 +18,7 @@ public:
   ScoreStore();
 
   void reloadFromFile();
-  void addEntry(const char *nameUtf8, int score);
+  void addEntry(const char *nameAscii, int score);
   void topForDisplay(Entry (&out)[SCORE_STORE_LEADERBOARD_DISPLAY_SLOTS]) const;
 
 private:

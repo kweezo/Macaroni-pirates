@@ -10,11 +10,7 @@
 
 namespace LeaderboardView {
 
-namespace {
-
-constexpr float kRowStepY = 28.0f;
-
-}
+static constexpr float kRowStepY = 28.0f;
 
 void drawTopN(SDL_Surface *surface, const ScoreStore &store, float titleX,
               float titleY, float listX, float listY, float titleScale,

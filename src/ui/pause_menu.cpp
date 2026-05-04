@@ -34,12 +34,12 @@ void PauseMenu::draw(SDL_Surface *surface, GameState &gs) const {
 
 void PauseMenu::handleClick(float mx, float my, GameState &gs) {
   if (resumeButton.hitTest(mx, my)) {
-    gs.paused.store(false, std::memory_order_relaxed);
+    gs.paused = false;
     return;
   }
   if (saveScoreButton.hitTest(mx, my)) {
-    const int sc = gs.score.load(std::memory_order_relaxed);
-    gs.scoreStore.addEntry(gs.playerProfile.nameUtf8(), sc);
+    const int sc = gs.score;
+    gs.scoreStore.addEntry(gs.playerProfile.nameAscii(), sc);
     return;
   }
   if (quitButton.hitTest(mx, my)) {

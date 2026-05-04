@@ -25,8 +25,8 @@ public:
   void setFocused(bool on);
   bool focused() const { return isFocused; }
 
-  void setText(const char *utf8);
-  void setPlaceholder(const char *utf8);
+  void setText(const char *ascii);
+  void setPlaceholder(const char *ascii);
 
   const char *text() const { return textChars; }
 

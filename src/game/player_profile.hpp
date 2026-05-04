@@ -4,16 +4,16 @@
 
 class PlayerProfile {
 public:
-  void setFromUtf8(const char *utf8) {
-    if (!utf8) {
+  void setFromAscii(const char *ascii) {
+    if (!ascii) {
       profileName[0] = '\0';
       return;
     }
-    std::strncpy(profileName, utf8, sizeof profileName - 1);
+    std::strncpy(profileName, ascii, sizeof profileName - 1);
     profileName[sizeof profileName - 1] = '\0';
   }
 
-  const char *nameUtf8() const { return profileName; }
+  const char *nameAscii() const { return profileName; }
 
 private:
   char profileName[64]{};

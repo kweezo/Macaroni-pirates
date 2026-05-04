@@ -8,7 +8,6 @@
 
 #include <cmath>
 #include <cstdlib>
-#include <mutex>
 
 AllyManager::AllyManager() : Process(0) {}
 
@@ -60,7 +59,7 @@ void AllyManager::updatePatrol(Instance &inst) {
 void AllyManager::simulatePatrolAndAllyEnemyCollisions(float sharedDt) {
   if (gameState.replay.isReplayActive())
     return;
-  if (gameState.paused.load(std::memory_order_relaxed))
+  if (gameState.paused)
     return;
   if (gameState.isGameOver())
     return;
@@ -83,7 +82,6 @@ void AllyManager::run() {}
 void AllyManager::destruct() {}
 
 bool AllyManager::onCannonballHit(float cx, float cy, float cw, float ch) {
-  std::lock_guard<std::recursive_mutex> guard(gameState.worldSimMutex);
   for (Instance &inst : instances) {
     if (!inst.active)
       continue;

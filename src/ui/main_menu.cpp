@@ -29,7 +29,7 @@ MainMenuResult MainMenu::run(GameState &gs) {
   nameField.setWindow(window);
   nameField.setRect(48.0f, 218.0f, 420.0f, 48.0f);
   nameField.setPlaceholder("Your name");
-  nameField.setText(gs.playerProfile.nameUtf8());
+  nameField.setText(gs.playerProfile.nameAscii());
 
   gs.reloadScoresFromDisk();
 
@@ -84,7 +84,7 @@ MainMenuResult MainMenu::run(GameState &gs) {
 void MainMenu::applyOptionalName(GameState &gs) {
   const char *nm = nameField.text();
   if (nm[0])
-    gs.playerProfile.setFromUtf8(nm);
+    gs.playerProfile.setFromAscii(nm);
 }
 
 void MainMenu::handleClick(float mx, float my, GameState &gs) {
