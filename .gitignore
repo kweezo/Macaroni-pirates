@@ -1,4 +1,35 @@
-CMakeFiles
+# --- CMake / in-tree configure ---
+CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+DartConfiguration.tcl
+cmake_uninstall.cmake
+Makefile
+*.ninja
+.ninja_deps
+.ninja_log
+compile_commands.json
+install_manifest.txt
+
+build/
+cmake-build-*/
+out/
+
+# --- Binaries & Windows runtime copies ---
 mac
+mac.exe
+*.exe
+*.dll
+*.o
+*.obj
+*.a
+*.lib
+*.ilk
+*.pdb
+
+# --- IDE ---
+.vs/
+.vscode/
+*.user
