@@ -15,6 +15,7 @@ void AllyManager::init() {
   tex = Texture(allyTexDat, (int)allyTexWidth, (int)allyTexHeight);
   if (!drawLinkedToMap) {
     addDependency((Drawable *)&gameState.map);
+    addDependency((Drawable *)&gameState.enemyManager);
     drawLinkedToMap = true;
   }
   lastTime = NANOS;
@@ -56,7 +57,7 @@ void AllyManager::updatePatrol(Instance &inst) {
   }
 }
 
-void AllyManager::simulatePatrolAndAllyEnemyCollisions(float sharedDt) {
+void AllyManager::patrolTick(float sharedDt) {
   if (gameState.replay.isReplayActive())
     return;
   if (gameState.paused)
@@ -81,7 +82,8 @@ void AllyManager::run() {}
 
 void AllyManager::destruct() {}
 
-bool AllyManager::onCannonballHit(float cx, float cy, float cw, float ch) {
+bool AllyManager::cannonballOverlapsAlly(float cx, float cy, float cw,
+                                         float ch) {
   for (Instance &inst : instances) {
     if (!inst.active)
       continue;

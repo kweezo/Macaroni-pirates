@@ -14,9 +14,9 @@ class AllyManager : public Process, public Drawable {
 public:
   AllyManager();
 
-  bool onCannonballHit(float x, float y, float w, float h);
+  bool cannonballOverlapsAlly(float x, float y, float w, float h);
 
-  void simulatePatrolAndAllyEnemyCollisions(float sharedDt);
+  void patrolTick(float sharedDt);
 
 private:
   struct Instance {

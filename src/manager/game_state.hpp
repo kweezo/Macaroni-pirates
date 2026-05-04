@@ -64,6 +64,7 @@ struct GameState {
 private:
   int enemyWaveIndex = 0;
   uint64_t enemyStageStartedNs = 0;
+  bool finalWaveVictoryHandled = false;
 };
 
 extern GameState gameState;

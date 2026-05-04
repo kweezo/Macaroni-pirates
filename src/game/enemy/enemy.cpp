@@ -32,6 +32,8 @@ void EnemyManager::run() {
   if (gameState.isGameOver())
     return;
 
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
+
   dt = (NANOS - lastTime) / (float)NS;
   lastTime = NANOS;
 
@@ -41,7 +43,7 @@ void EnemyManager::run() {
     updateInstance(instance);
   }
 
-  gameState.allyManager.simulatePatrolAndAllyEnemyCollisions(dt);
+  gameState.allyManager.patrolTick(dt);
 
   simulateFloatingTrash();
 
@@ -53,6 +55,8 @@ void EnemyManager::destruct() {}
 void EnemyManager::render(SDL_Surface *surface) {
   if (gameState.replay.isReplayActive())
     return;
+
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
 
   for (TrashPiece const &tp : floatingTrash) {
     if (!tp.active)
@@ -73,7 +77,7 @@ void EnemyManager::render(SDL_Surface *surface) {
                                      (float)ENEMY_SIZE))
       continue;
 
-    if (instance.invulnerable) {
+    if (depositing(instance)) {
       invTex.draw(
           surface,
           {(uint16_t)instance.x, (uint16_t)instance.y, ENEMY_SIZE, ENEMY_SIZE},
@@ -95,10 +99,7 @@ void EnemyManager::updateInstance(Instance &instance) {
   if (!depositing(instance))
     instance.lastTrashSpawnNano = 0;
 
-  instance.invulnerable = false;
-
   if (depositing(instance)) {
-    instance.invulnerable = true;
     if (!gameState.paused) {
       if (instance.lastTrashSpawnNano == 0) {
         spawnFloatingTrash(instance);
@@ -125,6 +126,8 @@ void EnemyManager::updateInstance(Instance &instance) {
 
 void EnemyManager::applyCollisionWithAlly(float ax, float ay, float aw,
                                           float ah, float &allySpeedX) {
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
+
   constexpr float pad = 12.f;
 
   const float ew = (float)ENEMY_SIZE;
@@ -158,6 +161,8 @@ void EnemyManager::applyCollisionWithAlly(float ax, float ay, float aw,
 }
 
 void EnemyManager::spawnStageWave() {
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
+
   clearFloatingTrash();
   lastPlayerEnemyScorePenaltyNs = 0;
   for (Instance &instance : instances) {
@@ -167,12 +172,17 @@ void EnemyManager::spawnStageWave() {
     instance.lastTrashSpawnNano = 0;
   }
   const StageEnemyWave cfg = gameState.enemyWaveConfig();
+#ifdef MACARONI_DEBUG_QUICK_STAGE
+  spawnInstances(1, cfg.enemySpeedMultiplier);
+#else
   spawnInstances(cfg.enemyCount, cfg.enemySpeedMultiplier);
+#endif
 }
 
 void EnemyManager::tryAdvanceEnemyWaveLocked() {
   if (gameState.replay.isReplayActive())
     return;
+
   size_t alive = 0;
   for (Instance &instance : instances) {
     if (instance.active)
@@ -185,6 +195,8 @@ void EnemyManager::tryAdvanceEnemyWaveLocked() {
 
 bool EnemyManager::cannonballOverlapsDepositingEnemy(float x, float y, float w,
                                                      float h) {
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
+
   const float ew = (float)ENEMY_SIZE;
   const float eh = (float)ENEMY_SIZE;
   for (Instance &instance : instances) {
@@ -198,6 +210,8 @@ bool EnemyManager::cannonballOverlapsDepositingEnemy(float x, float y, float w,
 
 int EnemyManager::hitEnemyByRect(float x, float y, float w, float h,
                                  int maxHits) {
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
+
   int left = maxHits;
   int hits = 0;
   for (Instance &instance : instances) {
@@ -214,6 +228,8 @@ int EnemyManager::hitEnemyByRect(float x, float y, float w, float h,
 }
 
 void EnemyManager::hitTrashByRect(float px, float py, float pw, float ph) {
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
+
   const float tw = (float)TRASH_FLOAT_DIM;
   const float th = (float)TRASH_FLOAT_DIM;
   for (TrashPiece &tp : floatingTrash) {
@@ -228,6 +244,8 @@ void EnemyManager::hitTrashByRect(float px, float py, float pw, float ph) {
 
 void EnemyManager::applyPlayerEnemyScorePenalty(float px, float py, float pw,
                                                 float ph) {
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
+
   const uint64_t now = static_cast<uint64_t>(NANOS);
   if (now - lastPlayerEnemyScorePenaltyNs <
       PLAYER_ENEMY_SCORE_PENALTY_COOLDOWN_NS)
@@ -247,6 +265,8 @@ void EnemyManager::applyPlayerEnemyScorePenalty(float px, float py, float pw,
 
 bool EnemyManager::cannonballDissolvesTrash(float x, float y, float w,
                                             float h) {
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
+
   const float tw = (float)TRASH_FLOAT_DIM;
   const float th = (float)TRASH_FLOAT_DIM;
   for (TrashPiece &tp : floatingTrash) {
@@ -284,7 +304,6 @@ void EnemyManager::spawnInstances(size_t count, float speedMultiplier) {
                speedMultiplier;
     sp.oceanTouchTime = 0;
     sp.dir = false;
-    sp.invulnerable = false;
     sp.lastTrashSpawnNano = 0;
 
     filledSlots[slotIdx] = enemiesSpawned;

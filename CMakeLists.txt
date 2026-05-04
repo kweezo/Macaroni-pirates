@@ -15,3 +15,8 @@ ENDIF()
 
 target_link_libraries(mac PUBLIC SDL3)
 target_compile_options(mac PUBLIC -g)
+
+option(MACARONI_DEBUG_QUICK_STAGE "" OFF)
+if(MACARONI_DEBUG_QUICK_STAGE)
+  target_compile_definitions(mac PRIVATE MACARONI_DEBUG_QUICK_STAGE=1)
+endif()

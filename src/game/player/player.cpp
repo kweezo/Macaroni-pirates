@@ -19,7 +19,12 @@ float Player::centerX() const { return x + PLAYER_WIDTH / 2.0f; }
 
 float Player::centerY() const { return y + PLAYER_HEIGHT / 2.0f; }
 
-void Player::prepareForNewRound() { healthPoints = PLAYER_MAX_HEALTH; }
+void Player::prepareForNewRound() {
+  healthPoints = PLAYER_MAX_HEALTH;
+  lastShotPress = false;
+  for (Cannonball &cannonball : cannonballs)
+    cannonball.deactivate();
+}
 
 void Player::placeRandomTopSpawn() {
   y = PLAYER_TOP_SPAWN_Y;
@@ -133,7 +138,8 @@ void Player::run() {
       cannonball.deactivate();
       continue;
     }
-    if (gameState.allyManager.onCannonballHit(hitX, sweepTop, hitW, sweepH)) {
+    if (gameState.allyManager.cannonballOverlapsAlly(hitX, sweepTop, hitW,
+                                                    sweepH)) {
       gameState.subtractScoreBounded(SCORE_PENALTY_ALLY_HIT);
       cannonball.deactivate();
       continue;

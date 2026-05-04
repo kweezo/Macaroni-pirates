@@ -62,6 +62,7 @@ void GameState::start(bool replayFromMenu) {
   paused = false;
   gameOver = false;
   gameRunning = true;
+  finalWaveVictoryHandled = false;
   replay.beginRound(replayFromMenu);
   score = 0;
   enemyWaveIndex = 0;
@@ -111,11 +112,18 @@ void GameState::onEnemyWaveCleared() {
     return;
   if (replay.isReplayActive())
     return;
-  if (enemyWaveIndex >= kEnemyStageCount - 1)
+  if (enemyWaveIndex >= kEnemyStageCount - 1) {
+    if (!finalWaveVictoryHandled) {
+      finalWaveVictoryHandled = true;
+      scoreStore.addEntry(playerProfile.nameAscii(), score);
+      triggerGameOver();
+    }
     return;
+  }
   ++enemyWaveIndex;
   map.setBeachRatio(enemyWaveConfig().beachRatio);
   enemyManager.spawnStageWave();
+  player.prepareForNewRound();
   player.placeRandomTopSpawn();
   restartEnemyStageClock();
 }

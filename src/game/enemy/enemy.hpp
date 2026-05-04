@@ -1,11 +1,13 @@
 #pragma once
 
+#include "macros.hpp"
 #include "manager/process/process.hpp"
 #include "renderer/drawable/drawable.hpp"
 #include "texture/texture.hpp"
 
 #include <array>
 #include <cassert>
+#include <mutex>
 
 #define BASE_ENEMY_SPEED 100
 #define ENEMY_SPEED_DEVIATION 50
@@ -16,7 +18,6 @@
 #define TRASH_FLOAT_DIM 22
 #define TRASH_DRIFT_SPEED 38.f
 #define SCORE_POINTS_TRASH_COLLECT 2
-#define SCORE_POINTS_ENEMY_KILL 50
 #define SCORE_PENALTY_ALLY_HIT 30
 #define SCORE_PENALTY_PLAYER_ENEMY_TOUCH 30
 #define PLAYER_ENEMY_SCORE_PENALTY_COOLDOWN_NS (400000000ULL)
@@ -53,7 +54,6 @@ private:
     float speed = 0;
     bool dir = false;
     bool active = false;
-    bool invulnerable = false;
   };
 
   void init() override;
@@ -80,4 +80,6 @@ private:
   size_t lastTime = 0;
   bool drawLinkedToMap = false;
   uint64_t lastPlayerEnemyScorePenaltyNs = 0;
+
+  std::recursive_mutex simMutex;
 };
