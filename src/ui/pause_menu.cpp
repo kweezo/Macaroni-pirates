@@ -27,7 +27,7 @@ void PauseMenu::draw(SDL_Surface *surface, GameState &gs) const {
                          120.0f, pauseScale, pauseText, 255, 220, 160);
   resumeButton.draw(surface, "Resume", 0.3f);
   saveScoreButton.draw(surface, "Save score", 0.3f);
-  quitButton.draw(surface, "Quit to OS", 0.3f);
+  quitButton.draw(surface, "Quit", 0.3f);
 
   LeaderboardView::drawPauseStrip(surface, gs.scoreStore);
 }
