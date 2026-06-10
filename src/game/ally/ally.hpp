@@ -15,6 +15,8 @@ public:
   AllyManager();
 
   bool cannonballOverlapsAlly(float x, float y, float w, float h);
+  bool playerRectBlocked(float px, float py, float pw, float ph);
+  void applyCollisionWithPlayer(float px, float py, float pw, float ph);
 
   void patrolTick(float sharedDt);
 

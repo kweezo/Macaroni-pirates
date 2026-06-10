@@ -32,6 +32,8 @@ public:
   bool cannonballDissolvesTrash(float x, float y, float w, float h);
   void applyCollisionWithAlly(float ax, float ay, float aw, float ah,
                               float &allySpeedX);
+  bool playerRectBlocked(float px, float py, float pw, float ph);
+  void applyCollisionWithPlayer(float px, float py, float pw, float ph);
   void spawnStageWave();
   bool cannonballOverlapsDepositingEnemy(float x, float y, float w, float h);
 

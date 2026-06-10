@@ -2,6 +2,29 @@
 
 #include "macros.hpp"
 
+#include <fstream>
+#include <sstream>
+#include <string>
+
+namespace {
+
+static bool parseMotionLine(const std::string &line, PlayerMotionSample &out) {
+  if (line.empty() || line[0] == '#')
+    return false;
+  std::istringstream iss(line);
+  uint64_t t = 0;
+  float x = 0.f;
+  float y = 0.f;
+  if (!(iss >> t >> x >> y))
+    return false;
+  out.tNs = t;
+  out.x = x;
+  out.y = y;
+  return true;
+}
+
+} // namespace
+
 void PlayerReplay::closeRecordingFile() {
   std::lock_guard lock(recordingFileMutex);
   if (recordingOut.is_open())
@@ -13,11 +36,10 @@ void PlayerReplay::flushRecording() { closeRecordingFile(); }
 void PlayerReplay::appendIfPlaying(uint64_t relNs, float x, float y) {
   if (replayActive)
     return;
-  const PlayerMotionSample sample{relNs, x, y};
   std::lock_guard lock(recordingFileMutex);
   if (!recordingOut.is_open())
     return;
-  recordingOut.write(reinterpret_cast<const char *>(&sample), sizeof sample);
+  recordingOut << relNs << ' ' << x << ' ' << y << '\n';
 }
 
 void PlayerReplay::clearPlaybackState() {
@@ -29,31 +51,21 @@ void PlayerReplay::clearPlaybackState() {
 void PlayerReplay::finishReplay() { clearPlaybackState(); }
 
 void PlayerReplay::tryLoadReplayTape() {
-  std::ifstream in(tapePath, std::ios::binary | std::ios::ate);
+  std::ifstream in(tapePath);
   if (!in)
     return;
 
-  const std::streamoff endOff = in.tellg();
-  if (endOff <= 0)
-    return;
+  sampleCount = 0;
+  std::string line;
+  while (sampleCount < maxReplaySamples && std::getline(in, line)) {
+    PlayerMotionSample sample{};
+    if (!parseMotionLine(line, sample))
+      continue;
+    samples[sampleCount++] = sample;
+  }
 
-  const uint64_t bytes = static_cast<uint64_t>(endOff);
-  const size_t sampleSz = sizeof(PlayerMotionSample);
-  if (sampleSz == 0 || bytes % sampleSz != 0)
-    return;
-
-  size_t n = static_cast<size_t>(bytes / sampleSz);
-  if (n > maxReplaySamples)
-    n = maxReplaySamples;
-
-  in.seekg(0);
-  const std::streamsize readSz = static_cast<std::streamsize>(n * sampleSz);
-  if (n == 0 || !in.read(reinterpret_cast<char *>(samples.data()), readSz) ||
-      in.gcount() != readSz)
-    return;
-
-  sampleCount = n;
-  replayActive = true;
+  if (sampleCount > 0)
+    replayActive = true;
 }
 
 void PlayerReplay::openRecordingTapeTruncated() {
@@ -61,7 +73,8 @@ void PlayerReplay::openRecordingTapeTruncated() {
   if (recordingOut.is_open())
     recordingOut.close();
   recordingOut.clear();
-  recordingOut.open(tapePath, std::ios::binary | std::ios::trunc);
+  recordingOut.open(tapePath, std::ios::trunc);
+  recordingOut << "# t_ns x y\n";
 }
 
 bool PlayerReplay::peekReplayStart(float &ox, float &oy) {

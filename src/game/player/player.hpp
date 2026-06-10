@@ -30,6 +30,7 @@ public:
   void placeRandomTopSpawn();
   void takeDamage(int amount);
   int health() const;
+  void collisionRect(float &outX, float &outY, float &outW, float &outH) const;
 
 private:
   void init() override;

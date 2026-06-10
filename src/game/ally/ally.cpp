@@ -68,6 +68,12 @@ void AllyManager::patrolTick(float sharedDt) {
   dt = sharedDt;
   lastTime = NANOS;
 
+  float px = 0.f;
+  float py = 0.f;
+  float pw = 0.f;
+  float ph = 0.f;
+  gameState.player.collisionRect(px, py, pw, ph);
+
   for (Instance &inst : instances) {
     if (!inst.active)
       continue;
@@ -76,11 +82,50 @@ void AllyManager::patrolTick(float sharedDt) {
         inst.x, inst.y, (float)ALLY_SPRITE_DIM, (float)ALLY_SPRITE_DIM,
         inst.speedX);
   }
+  applyCollisionWithPlayer(px, py, pw, ph);
 }
 
 void AllyManager::run() {}
 
 void AllyManager::destruct() {}
+
+bool AllyManager::playerRectBlocked(float px, float py, float pw, float ph) {
+  const float aw = (float)ALLY_SPRITE_DIM;
+  const float ah = (float)ALLY_SPRITE_DIM;
+  for (Instance const &inst : instances) {
+    if (!inst.active)
+      continue;
+    if (rectsOverlap(px, py, pw, ph, inst.x, inst.y, aw, ah))
+      return true;
+  }
+  return false;
+}
+
+void AllyManager::applyCollisionWithPlayer(float px, float py, float pw,
+                                           float ph) {
+  constexpr float pad = 12.f;
+
+  const float aw = (float)ALLY_SPRITE_DIM;
+  const float ah = (float)ALLY_SPRITE_DIM;
+  const float playerTop = py;
+
+  for (Instance &inst : instances) {
+    if (!inst.active)
+      continue;
+    if (!rectsOverlap(px, py, pw, ph, inst.x, inst.y, aw, ah))
+      continue;
+
+    const float allyFoot = inst.y + ah;
+    const float playerMidY = py + ph * 0.5f;
+    const float allyMidY = inst.y + ah * 0.5f;
+
+    const bool topContact =
+        allyMidY < playerMidY && allyFoot <= playerTop + pad;
+
+    if (!topContact)
+      inst.speedX = -inst.speedX;
+  }
+}
 
 bool AllyManager::cannonballOverlapsAlly(float cx, float cy, float cw,
                                          float ch) {

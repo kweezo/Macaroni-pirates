@@ -63,8 +63,9 @@ void ScoreStore::reloadFromFile() {
   }
 
   std::string line;
-  while (entryCount < SCORE_STORE_MAX_SCORES &&
-         std::getline(in, line)) {
+  while (entryCount < SCORE_STORE_MAX_SCORES && std::getline(in, line)) {
+    if (line.empty() || line[0] == '#')
+      continue;
     const size_t sepPos = line.find('|');
     if (sepPos == std::string::npos)
       continue;
@@ -89,12 +90,12 @@ void ScoreStore::sortEntries() {
 }
 
 void ScoreStore::saveToFile() {
-  std::ofstream out(filePath);
+  std::ofstream out(filePath, std::ios::trunc);
   if (!out)
     return;
-  for (size_t i = 0; i < entryCount; ++i) {
+  out << "# name|score\n";
+  for (size_t i = 0; i < entryCount; ++i)
     out << entries[i].name << '|' << entries[i].score << '\n';
-  }
 }
 
 void ScoreStore::addEntry(const char *nameAscii, int score) {

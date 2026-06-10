@@ -160,6 +160,49 @@ void EnemyManager::applyCollisionWithAlly(float ax, float ay, float aw,
     allySpeedX = -allySpeedX;
 }
 
+bool EnemyManager::playerRectBlocked(float px, float py, float pw, float ph) {
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
+
+  const float ew = (float)ENEMY_SIZE;
+  const float eh = (float)ENEMY_SIZE;
+  for (Instance const &instance : instances) {
+    if (!instance.active)
+      continue;
+    if (rectsOverlap(px, py, pw, ph, instance.x, instance.y, ew, eh))
+      return true;
+  }
+  return false;
+}
+
+void EnemyManager::applyCollisionWithPlayer(float px, float py, float pw,
+                                            float ph) {
+  std::lock_guard<std::recursive_mutex> lock(simMutex);
+
+  constexpr float pad = 12.f;
+
+  const float ew = (float)ENEMY_SIZE;
+  const float eh = (float)ENEMY_SIZE;
+  const float playerTop = py;
+
+  for (Instance &instance : instances) {
+    if (!instance.active || depositing(instance))
+      continue;
+    if (!rectsOverlap(instance.x, instance.y, ew, eh, px, py, pw, ph))
+      continue;
+
+    const float enemyFoot = instance.y + eh;
+    const float playerMidY = py + ph * 0.5f;
+    const float enemyMidY = instance.y + eh * 0.5f;
+
+    const bool topContact =
+        instance.dir ||
+        (enemyMidY < playerMidY && enemyFoot <= playerTop + pad);
+
+    if (topContact)
+      instance.dir = false;
+  }
+}
+
 void EnemyManager::spawnStageWave() {
   std::lock_guard<std::recursive_mutex> lock(simMutex);
 

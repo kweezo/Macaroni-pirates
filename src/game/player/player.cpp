@@ -19,6 +19,14 @@ float Player::centerX() const { return x + PLAYER_WIDTH / 2.0f; }
 
 float Player::centerY() const { return y + PLAYER_HEIGHT / 2.0f; }
 
+void Player::collisionRect(float &outX, float &outY, float &outW,
+                           float &outH) const {
+  outX = x;
+  outY = y;
+  outW = (float)PLAYER_WIDTH;
+  outH = (float)PLAYER_HEIGHT;
+}
+
 void Player::prepareForNewRound() {
   healthPoints = PLAYER_MAX_HEALTH;
   lastShotPress = false;
@@ -84,6 +92,11 @@ void Player::run() {
   lastTime = NANOS;
 
   movement();
+
+  const float pw = (float)PLAYER_WIDTH;
+  const float ph = (float)PLAYER_HEIGHT;
+  gameState.enemyManager.applyCollisionWithPlayer(x, y, pw, ph);
+  gameState.allyManager.applyCollisionWithPlayer(x, y, pw, ph);
 
   gameState.replay.appendIfPlaying(static_cast<uint64_t>(NANOS) -
                                        gameState.replay.recordingTimeOrigin(),
@@ -175,8 +188,18 @@ void Player::movement() {
   dx *= speed / scalar;
   dy *= speed / scalar;
 
-  x += dx * dt;
-  y += dy * dt;
+  const float pw = (float)PLAYER_WIDTH;
+  const float ph = (float)PLAYER_HEIGHT;
+
+  const float tryX = x + dx * dt;
+  if (!gameState.enemyManager.playerRectBlocked(tryX, y, pw, ph) &&
+      !gameState.allyManager.playerRectBlocked(tryX, y, pw, ph))
+    x = tryX;
+
+  const float tryY = y + dy * dt;
+  if (!gameState.enemyManager.playerRectBlocked(x, tryY, pw, ph) &&
+      !gameState.allyManager.playerRectBlocked(x, tryY, pw, ph))
+    y = tryY;
 }
 
 void Player::shooting() {
