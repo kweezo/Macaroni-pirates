@@ -175,32 +175,33 @@ bool EnemyManager::playerRectBlocked(float px, float py, float pw, float ph) {
 }
 
 void EnemyManager::applyCollisionWithPlayer(float px, float py, float pw,
-                                            float ph) {
-  std::lock_guard<std::recursive_mutex> lock(simMutex);
+  float ph) {
+std::lock_guard<std::recursive_mutex> lock(simMutex);
 
-  constexpr float pad = 12.f;
+constexpr float pad = 12.f;
 
-  const float ew = (float)ENEMY_SIZE;
-  const float eh = (float)ENEMY_SIZE;
-  const float playerTop = py;
+const float ew = (float)ENEMY_SIZE;
+const float eh = (float)ENEMY_SIZE;
+const float playerTop = py;
 
-  for (Instance &instance : instances) {
-    if (!instance.active || depositing(instance))
-      continue;
-    if (!rectsOverlap(instance.x, instance.y, ew, eh, px, py, pw, ph))
-      continue;
+for (Instance &instance : instances) {
+if (!instance.active || depositing(instance))
+continue;
+if (!rectsOverlap(instance.x, instance.y, ew, eh, px, py, pw, ph))
+continue;
 
-    const float enemyFoot = instance.y + eh;
-    const float playerMidY = py + ph * 0.5f;
-    const float enemyMidY = instance.y + eh * 0.5f;
+const float enemyFoot = instance.y + eh;
+const float playerMidY = py + ph * 0.5f;
+const float enemyMidY = instance.y + eh * 0.5f;
 
-    const bool topContact =
-        instance.dir ||
-        (enemyMidY < playerMidY && enemyFoot <= playerTop + pad);
+const bool topContact =
+(enemyMidY < playerMidY && enemyFoot <= playerTop + pad);
 
-    if (topContact)
-      instance.dir = false;
-  }
+if (topContact)
+instance.dir = false;
+else
+instance.dir = true;
+}
 }
 
 void EnemyManager::spawnStageWave() {

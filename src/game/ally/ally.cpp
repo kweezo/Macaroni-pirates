@@ -89,13 +89,26 @@ void AllyManager::run() {}
 
 void AllyManager::destruct() {}
 
+// Narrow hitbox matching the stick figure's actual body.
+// Tweak kHitboxScaleX if horizontal feel is off.
+static constexpr float kAllyHitboxScaleX = 0.25f;
+static constexpr float kAllyHitboxScaleY = 1.0f;
+
+static void allyHitbox(float instX, float instY,
+                        float &ax, float &ay, float &aw, float &ah) {
+  aw = (float)ALLY_SPRITE_DIM * kAllyHitboxScaleX;
+  ah = (float)ALLY_SPRITE_DIM * kAllyHitboxScaleY;
+  ax = instX + (float)ALLY_SPRITE_DIM * (1.f - kAllyHitboxScaleX) * 0.5f;
+  ay = instY - 6.f;
+}
+
 bool AllyManager::playerRectBlocked(float px, float py, float pw, float ph) {
-  const float aw = (float)ALLY_SPRITE_DIM;
-  const float ah = (float)ALLY_SPRITE_DIM;
   for (Instance const &inst : instances) {
     if (!inst.active)
       continue;
-    if (rectsOverlap(px, py, pw, ph, inst.x, inst.y, aw, ah))
+    float ax, ay, aw, ah;
+    allyHitbox(inst.x, inst.y, ax, ay, aw, ah);
+    if (rectsOverlap(px, py, pw, ph, ax, ay, aw, ah))
       return true;
   }
   return false;
@@ -104,26 +117,27 @@ bool AllyManager::playerRectBlocked(float px, float py, float pw, float ph) {
 void AllyManager::applyCollisionWithPlayer(float px, float py, float pw,
                                            float ph) {
   constexpr float pad = 12.f;
-
-  const float aw = (float)ALLY_SPRITE_DIM;
-  const float ah = (float)ALLY_SPRITE_DIM;
   const float playerTop = py;
 
   for (Instance &inst : instances) {
     if (!inst.active)
       continue;
-    if (!rectsOverlap(px, py, pw, ph, inst.x, inst.y, aw, ah))
+    float ax, ay, aw, ah;
+    allyHitbox(inst.x, inst.y, ax, ay, aw, ah);
+    if (!rectsOverlap(px, py, pw, ph, ax, ay, aw, ah))
       continue;
-
-    const float allyFoot = inst.y + ah;
+    const float allyFoot   = ay + ah;
     const float playerMidY = py + ph * 0.5f;
-    const float allyMidY = inst.y + ah * 0.5f;
-
+    const float allyMidY   = ay + ah * 0.5f;
     const bool topContact =
         allyMidY < playerMidY && allyFoot <= playerTop + pad;
-
-    if (!topContact)
-      inst.speedX = -inst.speedX;
+    if (!topContact) {
+      const bool allyRightOfPlayer = ax + aw * 0.5f > px + pw * 0.5f;
+      const bool movingToward = allyRightOfPlayer ? inst.speedX < 0
+                                                  : inst.speedX > 0;
+      if (movingToward)
+        inst.speedX = -inst.speedX;
+    }
   }
 }
 

@@ -29,5 +29,5 @@ private:
   std::array<Entry, SCORE_STORE_MAX_SCORES> entries{};
   size_t entryCount = 0;
   mutable std::mutex storeMutex;
-  static constexpr const char *filePath = "scores.txt";
+  static constexpr const char *filePath = "scores.bin";
 };
