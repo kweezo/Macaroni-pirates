@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <SDL3/SDL.h>
@@ -58,6 +57,10 @@ private:
   bool drawLinkedToMap = false;
 
   int healthPoints = PLAYER_MAX_HEALTH;
+
+  // ===== Enemy collision score cooldown =====
+  float enemyCollisionPenaltyCooldown = 0.0f;
+  static constexpr float ENEMY_COLLISION_PENALTY_INTERVAL = 0.3f;
 
   std::array<Cannonball, MAX_CANNONBALL_COUNT> cannonballs;
 };

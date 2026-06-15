@@ -48,19 +48,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = "C:/Program Files/CMake/bin/cmake.exe"
+CMAKE_COMMAND = /usr/bin/cmake
 
 # The command to remove a file.
-RM = "C:/Program Files/CMake/bin/cmake.exe" -E rm -f
+RM = /usr/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = C:/Users/jakob/Macaroni-pirates
+CMAKE_SOURCE_DIR = /home/jtv/Macaroni-pirates
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = C:/Users/jakob/Macaroni-pirates
+CMAKE_BINARY_DIR = /home/jtv/Macaroni-pirates
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -68,7 +68,7 @@ CMAKE_BINARY_DIR = C:/Users/jakob/Macaroni-pirates
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running CMake cache editor..."
-	"C:/Program Files/CMake/bin/cmake-gui.exe" -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -78,7 +78,7 @@ edit_cache/fast: edit_cache
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running CMake to regenerate build system..."
-	"C:/Program Files/CMake/bin/cmake.exe" --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/usr/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start C:/Users/jakob/Macaroni-pirates/CMakeFiles C:/Users/jakob/Macaroni-pirates//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/jtv/Macaroni-pirates/CMakeFiles /home/jtv/Macaroni-pirates//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start C:/Users/jakob/Macaroni-pirates/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/jtv/Macaroni-pirates/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -113,7 +113,7 @@ preinstall/fast:
 
 # clear depends
 depend:
-	$(CMAKE_COMMAND) -P C:/Users/jakob/Macaroni-pirates/CMakeFiles/VerifyGlobs.cmake
+	$(CMAKE_COMMAND) -P /home/jtv/Macaroni-pirates/CMakeFiles/VerifyGlobs.cmake
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
@@ -130,13 +130,13 @@ mac/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/build
 .PHONY : mac/fast
 
-src/game/ally/ally.obj: src/game/ally/ally.cpp.obj
-.PHONY : src/game/ally/ally.obj
+src/game/ally/ally.o: src/game/ally/ally.cpp.o
+.PHONY : src/game/ally/ally.o
 
 # target to build an object file
-src/game/ally/ally.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/ally/ally.cpp.obj
-.PHONY : src/game/ally/ally.cpp.obj
+src/game/ally/ally.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/ally/ally.cpp.o
+.PHONY : src/game/ally/ally.cpp.o
 
 src/game/ally/ally.i: src/game/ally/ally.cpp.i
 .PHONY : src/game/ally/ally.i
@@ -154,13 +154,13 @@ src/game/ally/ally.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/ally/ally.cpp.s
 .PHONY : src/game/ally/ally.cpp.s
 
-src/game/enemy/enemy.obj: src/game/enemy/enemy.cpp.obj
-.PHONY : src/game/enemy/enemy.obj
+src/game/enemy/enemy.o: src/game/enemy/enemy.cpp.o
+.PHONY : src/game/enemy/enemy.o
 
 # target to build an object file
-src/game/enemy/enemy.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/enemy/enemy.cpp.obj
-.PHONY : src/game/enemy/enemy.cpp.obj
+src/game/enemy/enemy.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/enemy/enemy.cpp.o
+.PHONY : src/game/enemy/enemy.cpp.o
 
 src/game/enemy/enemy.i: src/game/enemy/enemy.cpp.i
 .PHONY : src/game/enemy/enemy.i
@@ -178,13 +178,13 @@ src/game/enemy/enemy.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/enemy/enemy.cpp.s
 .PHONY : src/game/enemy/enemy.cpp.s
 
-src/game/map/map.obj: src/game/map/map.cpp.obj
-.PHONY : src/game/map/map.obj
+src/game/map/map.o: src/game/map/map.cpp.o
+.PHONY : src/game/map/map.o
 
 # target to build an object file
-src/game/map/map.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/map/map.cpp.obj
-.PHONY : src/game/map/map.cpp.obj
+src/game/map/map.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/map/map.cpp.o
+.PHONY : src/game/map/map.cpp.o
 
 src/game/map/map.i: src/game/map/map.cpp.i
 .PHONY : src/game/map/map.i
@@ -202,13 +202,13 @@ src/game/map/map.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/map/map.cpp.s
 .PHONY : src/game/map/map.cpp.s
 
-src/game/player/cannonball/cannonball.obj: src/game/player/cannonball/cannonball.cpp.obj
-.PHONY : src/game/player/cannonball/cannonball.obj
+src/game/player/cannonball/cannonball.o: src/game/player/cannonball/cannonball.cpp.o
+.PHONY : src/game/player/cannonball/cannonball.o
 
 # target to build an object file
-src/game/player/cannonball/cannonball.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/player/cannonball/cannonball.cpp.obj
-.PHONY : src/game/player/cannonball/cannonball.cpp.obj
+src/game/player/cannonball/cannonball.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/player/cannonball/cannonball.cpp.o
+.PHONY : src/game/player/cannonball/cannonball.cpp.o
 
 src/game/player/cannonball/cannonball.i: src/game/player/cannonball/cannonball.cpp.i
 .PHONY : src/game/player/cannonball/cannonball.i
@@ -226,13 +226,13 @@ src/game/player/cannonball/cannonball.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/player/cannonball/cannonball.cpp.s
 .PHONY : src/game/player/cannonball/cannonball.cpp.s
 
-src/game/player/player.obj: src/game/player/player.cpp.obj
-.PHONY : src/game/player/player.obj
+src/game/player/player.o: src/game/player/player.cpp.o
+.PHONY : src/game/player/player.o
 
 # target to build an object file
-src/game/player/player.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/player/player.cpp.obj
-.PHONY : src/game/player/player.cpp.obj
+src/game/player/player.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/player/player.cpp.o
+.PHONY : src/game/player/player.cpp.o
 
 src/game/player/player.i: src/game/player/player.cpp.i
 .PHONY : src/game/player/player.i
@@ -250,13 +250,13 @@ src/game/player/player.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/player/player.cpp.s
 .PHONY : src/game/player/player.cpp.s
 
-src/game/player/player_replay.obj: src/game/player/player_replay.cpp.obj
-.PHONY : src/game/player/player_replay.obj
+src/game/player/player_replay.o: src/game/player/player_replay.cpp.o
+.PHONY : src/game/player/player_replay.o
 
 # target to build an object file
-src/game/player/player_replay.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/player/player_replay.cpp.obj
-.PHONY : src/game/player/player_replay.cpp.obj
+src/game/player/player_replay.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/player/player_replay.cpp.o
+.PHONY : src/game/player/player_replay.cpp.o
 
 src/game/player/player_replay.i: src/game/player/player_replay.cpp.i
 .PHONY : src/game/player/player_replay.i
@@ -274,13 +274,13 @@ src/game/player/player_replay.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/player/player_replay.cpp.s
 .PHONY : src/game/player/player_replay.cpp.s
 
-src/game/score_store.obj: src/game/score_store.cpp.obj
-.PHONY : src/game/score_store.obj
+src/game/score_store.o: src/game/score_store.cpp.o
+.PHONY : src/game/score_store.o
 
 # target to build an object file
-src/game/score_store.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/score_store.cpp.obj
-.PHONY : src/game/score_store.cpp.obj
+src/game/score_store.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/score_store.cpp.o
+.PHONY : src/game/score_store.cpp.o
 
 src/game/score_store.i: src/game/score_store.cpp.i
 .PHONY : src/game/score_store.i
@@ -298,13 +298,13 @@ src/game/score_store.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/game/score_store.cpp.s
 .PHONY : src/game/score_store.cpp.s
 
-src/main.obj: src/main.cpp.obj
-.PHONY : src/main.obj
+src/main.o: src/main.cpp.o
+.PHONY : src/main.o
 
 # target to build an object file
-src/main.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/main.cpp.obj
-.PHONY : src/main.cpp.obj
+src/main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/main.cpp.o
+.PHONY : src/main.cpp.o
 
 src/main.i: src/main.cpp.i
 .PHONY : src/main.i
@@ -322,13 +322,13 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
-src/manager/game_state.obj: src/manager/game_state.cpp.obj
-.PHONY : src/manager/game_state.obj
+src/manager/game_state.o: src/manager/game_state.cpp.o
+.PHONY : src/manager/game_state.o
 
 # target to build an object file
-src/manager/game_state.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/manager/game_state.cpp.obj
-.PHONY : src/manager/game_state.cpp.obj
+src/manager/game_state.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/manager/game_state.cpp.o
+.PHONY : src/manager/game_state.cpp.o
 
 src/manager/game_state.i: src/manager/game_state.cpp.i
 .PHONY : src/manager/game_state.i
@@ -346,13 +346,13 @@ src/manager/game_state.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/manager/game_state.cpp.s
 .PHONY : src/manager/game_state.cpp.s
 
-src/manager/process/process.obj: src/manager/process/process.cpp.obj
-.PHONY : src/manager/process/process.obj
+src/manager/process/process.o: src/manager/process/process.cpp.o
+.PHONY : src/manager/process/process.o
 
 # target to build an object file
-src/manager/process/process.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/manager/process/process.cpp.obj
-.PHONY : src/manager/process/process.cpp.obj
+src/manager/process/process.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/manager/process/process.cpp.o
+.PHONY : src/manager/process/process.cpp.o
 
 src/manager/process/process.i: src/manager/process/process.cpp.i
 .PHONY : src/manager/process/process.i
@@ -370,13 +370,13 @@ src/manager/process/process.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/manager/process/process.cpp.s
 .PHONY : src/manager/process/process.cpp.s
 
-src/manager/process/process_manager.obj: src/manager/process/process_manager.cpp.obj
-.PHONY : src/manager/process/process_manager.obj
+src/manager/process/process_manager.o: src/manager/process/process_manager.cpp.o
+.PHONY : src/manager/process/process_manager.o
 
 # target to build an object file
-src/manager/process/process_manager.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/manager/process/process_manager.cpp.obj
-.PHONY : src/manager/process/process_manager.cpp.obj
+src/manager/process/process_manager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/manager/process/process_manager.cpp.o
+.PHONY : src/manager/process/process_manager.cpp.o
 
 src/manager/process/process_manager.i: src/manager/process/process_manager.cpp.i
 .PHONY : src/manager/process/process_manager.i
@@ -394,13 +394,13 @@ src/manager/process/process_manager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/manager/process/process_manager.cpp.s
 .PHONY : src/manager/process/process_manager.cpp.s
 
-src/renderer/drawable/drawable.obj: src/renderer/drawable/drawable.cpp.obj
-.PHONY : src/renderer/drawable/drawable.obj
+src/renderer/drawable/drawable.o: src/renderer/drawable/drawable.cpp.o
+.PHONY : src/renderer/drawable/drawable.o
 
 # target to build an object file
-src/renderer/drawable/drawable.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/renderer/drawable/drawable.cpp.obj
-.PHONY : src/renderer/drawable/drawable.cpp.obj
+src/renderer/drawable/drawable.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/renderer/drawable/drawable.cpp.o
+.PHONY : src/renderer/drawable/drawable.cpp.o
 
 src/renderer/drawable/drawable.i: src/renderer/drawable/drawable.cpp.i
 .PHONY : src/renderer/drawable/drawable.i
@@ -418,13 +418,13 @@ src/renderer/drawable/drawable.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/renderer/drawable/drawable.cpp.s
 .PHONY : src/renderer/drawable/drawable.cpp.s
 
-src/renderer/font/font_renderer.obj: src/renderer/font/font_renderer.cpp.obj
-.PHONY : src/renderer/font/font_renderer.obj
+src/renderer/font/font_renderer.o: src/renderer/font/font_renderer.cpp.o
+.PHONY : src/renderer/font/font_renderer.o
 
 # target to build an object file
-src/renderer/font/font_renderer.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/renderer/font/font_renderer.cpp.obj
-.PHONY : src/renderer/font/font_renderer.cpp.obj
+src/renderer/font/font_renderer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/renderer/font/font_renderer.cpp.o
+.PHONY : src/renderer/font/font_renderer.cpp.o
 
 src/renderer/font/font_renderer.i: src/renderer/font/font_renderer.cpp.i
 .PHONY : src/renderer/font/font_renderer.i
@@ -442,13 +442,13 @@ src/renderer/font/font_renderer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/renderer/font/font_renderer.cpp.s
 .PHONY : src/renderer/font/font_renderer.cpp.s
 
-src/renderer/renderer.obj: src/renderer/renderer.cpp.obj
-.PHONY : src/renderer/renderer.obj
+src/renderer/renderer.o: src/renderer/renderer.cpp.o
+.PHONY : src/renderer/renderer.o
 
 # target to build an object file
-src/renderer/renderer.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/renderer/renderer.cpp.obj
-.PHONY : src/renderer/renderer.cpp.obj
+src/renderer/renderer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/renderer/renderer.cpp.o
+.PHONY : src/renderer/renderer.cpp.o
 
 src/renderer/renderer.i: src/renderer/renderer.cpp.i
 .PHONY : src/renderer/renderer.i
@@ -466,13 +466,13 @@ src/renderer/renderer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/renderer/renderer.cpp.s
 .PHONY : src/renderer/renderer.cpp.s
 
-src/texture/texture.obj: src/texture/texture.cpp.obj
-.PHONY : src/texture/texture.obj
+src/texture/texture.o: src/texture/texture.cpp.o
+.PHONY : src/texture/texture.o
 
 # target to build an object file
-src/texture/texture.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/texture/texture.cpp.obj
-.PHONY : src/texture/texture.cpp.obj
+src/texture/texture.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/texture/texture.cpp.o
+.PHONY : src/texture/texture.cpp.o
 
 src/texture/texture.i: src/texture/texture.cpp.i
 .PHONY : src/texture/texture.i
@@ -490,13 +490,13 @@ src/texture/texture.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/texture/texture.cpp.s
 .PHONY : src/texture/texture.cpp.s
 
-src/ui/game_ui.obj: src/ui/game_ui.cpp.obj
-.PHONY : src/ui/game_ui.obj
+src/ui/game_ui.o: src/ui/game_ui.cpp.o
+.PHONY : src/ui/game_ui.o
 
 # target to build an object file
-src/ui/game_ui.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/game_ui.cpp.obj
-.PHONY : src/ui/game_ui.cpp.obj
+src/ui/game_ui.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/game_ui.cpp.o
+.PHONY : src/ui/game_ui.cpp.o
 
 src/ui/game_ui.i: src/ui/game_ui.cpp.i
 .PHONY : src/ui/game_ui.i
@@ -514,13 +514,13 @@ src/ui/game_ui.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/game_ui.cpp.s
 .PHONY : src/ui/game_ui.cpp.s
 
-src/ui/leaderboard_view.obj: src/ui/leaderboard_view.cpp.obj
-.PHONY : src/ui/leaderboard_view.obj
+src/ui/leaderboard_view.o: src/ui/leaderboard_view.cpp.o
+.PHONY : src/ui/leaderboard_view.o
 
 # target to build an object file
-src/ui/leaderboard_view.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/leaderboard_view.cpp.obj
-.PHONY : src/ui/leaderboard_view.cpp.obj
+src/ui/leaderboard_view.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/leaderboard_view.cpp.o
+.PHONY : src/ui/leaderboard_view.cpp.o
 
 src/ui/leaderboard_view.i: src/ui/leaderboard_view.cpp.i
 .PHONY : src/ui/leaderboard_view.i
@@ -538,13 +538,13 @@ src/ui/leaderboard_view.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/leaderboard_view.cpp.s
 .PHONY : src/ui/leaderboard_view.cpp.s
 
-src/ui/main_menu.obj: src/ui/main_menu.cpp.obj
-.PHONY : src/ui/main_menu.obj
+src/ui/main_menu.o: src/ui/main_menu.cpp.o
+.PHONY : src/ui/main_menu.o
 
 # target to build an object file
-src/ui/main_menu.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/main_menu.cpp.obj
-.PHONY : src/ui/main_menu.cpp.obj
+src/ui/main_menu.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/main_menu.cpp.o
+.PHONY : src/ui/main_menu.cpp.o
 
 src/ui/main_menu.i: src/ui/main_menu.cpp.i
 .PHONY : src/ui/main_menu.i
@@ -562,13 +562,13 @@ src/ui/main_menu.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/main_menu.cpp.s
 .PHONY : src/ui/main_menu.cpp.s
 
-src/ui/pause_menu.obj: src/ui/pause_menu.cpp.obj
-.PHONY : src/ui/pause_menu.obj
+src/ui/pause_menu.o: src/ui/pause_menu.cpp.o
+.PHONY : src/ui/pause_menu.o
 
 # target to build an object file
-src/ui/pause_menu.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/pause_menu.cpp.obj
-.PHONY : src/ui/pause_menu.cpp.obj
+src/ui/pause_menu.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/pause_menu.cpp.o
+.PHONY : src/ui/pause_menu.cpp.o
 
 src/ui/pause_menu.i: src/ui/pause_menu.cpp.i
 .PHONY : src/ui/pause_menu.i
@@ -586,13 +586,13 @@ src/ui/pause_menu.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/pause_menu.cpp.s
 .PHONY : src/ui/pause_menu.cpp.s
 
-src/ui/ui_button.obj: src/ui/ui_button.cpp.obj
-.PHONY : src/ui/ui_button.obj
+src/ui/ui_button.o: src/ui/ui_button.cpp.o
+.PHONY : src/ui/ui_button.o
 
 # target to build an object file
-src/ui/ui_button.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/ui_button.cpp.obj
-.PHONY : src/ui/ui_button.cpp.obj
+src/ui/ui_button.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/ui_button.cpp.o
+.PHONY : src/ui/ui_button.cpp.o
 
 src/ui/ui_button.i: src/ui/ui_button.cpp.i
 .PHONY : src/ui/ui_button.i
@@ -610,13 +610,13 @@ src/ui/ui_button.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/ui_button.cpp.s
 .PHONY : src/ui/ui_button.cpp.s
 
-src/ui/ui_text_field.obj: src/ui/ui_text_field.cpp.obj
-.PHONY : src/ui/ui_text_field.obj
+src/ui/ui_text_field.o: src/ui/ui_text_field.cpp.o
+.PHONY : src/ui/ui_text_field.o
 
 # target to build an object file
-src/ui/ui_text_field.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/ui_text_field.cpp.obj
-.PHONY : src/ui/ui_text_field.cpp.obj
+src/ui/ui_text_field.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mac.dir/build.make CMakeFiles/mac.dir/src/ui/ui_text_field.cpp.o
+.PHONY : src/ui/ui_text_field.cpp.o
 
 src/ui/ui_text_field.i: src/ui/ui_text_field.cpp.i
 .PHONY : src/ui/ui_text_field.i
@@ -643,67 +643,67 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... mac"
-	@echo "... src/game/ally/ally.obj"
+	@echo "... src/game/ally/ally.o"
 	@echo "... src/game/ally/ally.i"
 	@echo "... src/game/ally/ally.s"
-	@echo "... src/game/enemy/enemy.obj"
+	@echo "... src/game/enemy/enemy.o"
 	@echo "... src/game/enemy/enemy.i"
 	@echo "... src/game/enemy/enemy.s"
-	@echo "... src/game/map/map.obj"
+	@echo "... src/game/map/map.o"
 	@echo "... src/game/map/map.i"
 	@echo "... src/game/map/map.s"
-	@echo "... src/game/player/cannonball/cannonball.obj"
+	@echo "... src/game/player/cannonball/cannonball.o"
 	@echo "... src/game/player/cannonball/cannonball.i"
 	@echo "... src/game/player/cannonball/cannonball.s"
-	@echo "... src/game/player/player.obj"
+	@echo "... src/game/player/player.o"
 	@echo "... src/game/player/player.i"
 	@echo "... src/game/player/player.s"
-	@echo "... src/game/player/player_replay.obj"
+	@echo "... src/game/player/player_replay.o"
 	@echo "... src/game/player/player_replay.i"
 	@echo "... src/game/player/player_replay.s"
-	@echo "... src/game/score_store.obj"
+	@echo "... src/game/score_store.o"
 	@echo "... src/game/score_store.i"
 	@echo "... src/game/score_store.s"
-	@echo "... src/main.obj"
+	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
-	@echo "... src/manager/game_state.obj"
+	@echo "... src/manager/game_state.o"
 	@echo "... src/manager/game_state.i"
 	@echo "... src/manager/game_state.s"
-	@echo "... src/manager/process/process.obj"
+	@echo "... src/manager/process/process.o"
 	@echo "... src/manager/process/process.i"
 	@echo "... src/manager/process/process.s"
-	@echo "... src/manager/process/process_manager.obj"
+	@echo "... src/manager/process/process_manager.o"
 	@echo "... src/manager/process/process_manager.i"
 	@echo "... src/manager/process/process_manager.s"
-	@echo "... src/renderer/drawable/drawable.obj"
+	@echo "... src/renderer/drawable/drawable.o"
 	@echo "... src/renderer/drawable/drawable.i"
 	@echo "... src/renderer/drawable/drawable.s"
-	@echo "... src/renderer/font/font_renderer.obj"
+	@echo "... src/renderer/font/font_renderer.o"
 	@echo "... src/renderer/font/font_renderer.i"
 	@echo "... src/renderer/font/font_renderer.s"
-	@echo "... src/renderer/renderer.obj"
+	@echo "... src/renderer/renderer.o"
 	@echo "... src/renderer/renderer.i"
 	@echo "... src/renderer/renderer.s"
-	@echo "... src/texture/texture.obj"
+	@echo "... src/texture/texture.o"
 	@echo "... src/texture/texture.i"
 	@echo "... src/texture/texture.s"
-	@echo "... src/ui/game_ui.obj"
+	@echo "... src/ui/game_ui.o"
 	@echo "... src/ui/game_ui.i"
 	@echo "... src/ui/game_ui.s"
-	@echo "... src/ui/leaderboard_view.obj"
+	@echo "... src/ui/leaderboard_view.o"
 	@echo "... src/ui/leaderboard_view.i"
 	@echo "... src/ui/leaderboard_view.s"
-	@echo "... src/ui/main_menu.obj"
+	@echo "... src/ui/main_menu.o"
 	@echo "... src/ui/main_menu.i"
 	@echo "... src/ui/main_menu.s"
-	@echo "... src/ui/pause_menu.obj"
+	@echo "... src/ui/pause_menu.o"
 	@echo "... src/ui/pause_menu.i"
 	@echo "... src/ui/pause_menu.s"
-	@echo "... src/ui/ui_button.obj"
+	@echo "... src/ui/ui_button.o"
 	@echo "... src/ui/ui_button.i"
 	@echo "... src/ui/ui_button.s"
-	@echo "... src/ui/ui_text_field.obj"
+	@echo "... src/ui/ui_text_field.o"
 	@echo "... src/ui/ui_text_field.i"
 	@echo "... src/ui/ui_text_field.s"
 .PHONY : help
@@ -717,7 +717,7 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	$(CMAKE_COMMAND) -P C:/Users/jakob/Macaroni-pirates/CMakeFiles/VerifyGlobs.cmake
+	$(CMAKE_COMMAND) -P /home/jtv/Macaroni-pirates/CMakeFiles/VerifyGlobs.cmake
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 
